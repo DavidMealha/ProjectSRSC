@@ -92,7 +92,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 		
 		JPanel filePanel = new JPanel(new BorderLayout());
 
-		filePanel.add(new JLabel("Descarregar media"), BorderLayout.WEST);
+		filePanel.add(new JLabel("Not used"), BorderLayout.WEST);
 		fileField = new JTextField();
 		fileField.addActionListener( new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -101,12 +101,12 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 			});
 		filePanel.add(fileField, BorderLayout.CENTER);
 
-		JButton downloadButton = new JButton("DOWNLOAD");
+		JButton downloadButton = new JButton("Not Impl.");
 		downloadButton.addActionListener( new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			downloadFile();
-			}
-			});
+		public void actionPerformed(ActionEvent e) {
+		downloadFile();
+		}
+		});
 		filePanel.add(downloadButton, BorderLayout.EAST);
 		box.add( filePanel);
 		
