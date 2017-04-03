@@ -31,6 +31,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 	// Lista com utilizadores no chat
 	protected DefaultListModel users;
 
+	@SuppressWarnings("unchecked")
 	// Construtor para uma frame com do chat multicast  (inicializado em estado nao conectado)
 	public MChatCliente() {
 		super("MulticastChat (modo: desconectado)");
@@ -136,6 +137,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 	/**
 	 * Adiciona utilizador no interface do utilizador
 	 */
+	@SuppressWarnings("unchecked")
 	protected void uiAddUser( String userName) {
 		users.addElement( userName);
 	}
@@ -152,6 +154,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 	 * Inicializa lista de utilizadores a partir de um iterador -- pode ser usado
 	 * obtendo iterador de qualquer estrutura de dados de java
 	 */
+	@SuppressWarnings("unchecked")
 	protected void uiInitUsers( Iterator it) {
 		users.clear();
 		if( it != null)
