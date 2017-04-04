@@ -7,4 +7,14 @@ public class MyMChatCliente extends MChatCliente {
 	public MyMChatCliente(){
 		super();
 	}
+
+	public void SendMesage(){
+		//encriptar a mensagem por aqui?
+		//antes de a enviar, utilizar o algoritmo de encriptação que está no ficheiro de configuração.
+		super.sendMessage();
+	}
+
+	public static void main(String[] args) {
+		MChatCliente.main(args);
+	}
 }
