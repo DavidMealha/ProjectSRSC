@@ -11,12 +11,15 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	public MySecureMulticastSocket(int port) throws IOException{ super(port); }
 	
 	@Override
-	public void joinGroup(InetAddress group){
+	public void joinGroup(InetAddress group) throws IOException{
 		//get ip of multicast group
-		String pbeFilename = group.getHostAddress() + ".pbe";
+		String pbeFilename = "configs/" + group.getHostAddress() + ".pbe";
 		
 		//class with all the pbe configuration for the address
 		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(pbeFilename);
+		
+		//CipherHandler.cipherText(buffer)
+		super.joinGroup(group);
 	}
 	
 	@Override
@@ -34,10 +37,10 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		}
 	}
 	
-	@Override
-	public void receive(DatagramPacket dgPacket){
-		
-	}
+//	
+//	public void receive(DatagramPacket dgPacket){
+//		
+//	}
 	
 	//encriptar a mensagem por aqui?
 	//antes de a enviar, utilizar o algoritmo de encriptação que está no ficheiro de configuração.
