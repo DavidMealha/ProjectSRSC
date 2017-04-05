@@ -1,0 +1,24 @@
+Modos existentes:
+-ECB, não usa Initialization Vector
+-CBC, usa Initialization Vector
+-CFB, 
+-CTR, usa Initialization Vector
+
+Algoritmos criptrográficos existentes:
+-DES, plaintext block 64bits, ciphered block 64bits, key size 56bits chave de (horrivel)
+-TripleDES, plaintext block 64bits, ciphered block 64bits, key size 112/168bits(56*2/56*3)
+-AES, plaintext block 128bits, ciphered block 128bits, key size 128/192/256 bits
+-Blowfish
+-RC5
+-RC6..
+
+Algoritmos de hashing existentes:
+-MD5 (chaves pequenas, 60/56 bits?)
+-SHA1 (colisões, chaves pequenas, 90bits?)
+-SHA2
+-SHA3
+-SHA256
+-SHA512
+
+
+

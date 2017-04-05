@@ -92,6 +92,7 @@ public class MulticastChat extends Thread {
     byte[] data = byteStream.toByteArray();
     DatagramPacket packet = new DatagramPacket(data, data.length, group, 
                                                msocket.getLocalPort());
+    //em vez de mandar o packet, enviar o buffer, para encriptar o buffer e não o packet
     msocket.send(packet);
   } 
 
