@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 public class MySecureMulticastSocket extends MulticastSocket {
@@ -10,15 +11,25 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	public MySecureMulticastSocket(int port) throws IOException{ super(port); }
 	
 	@Override
+	public void joinGroup(InetAddress group){
+		//get ip of multicast group
+		String pbeFilename = group.getHostAddress() + ".pbe";
+		
+		//class with all the pbe configuration for the address
+		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(pbeFilename);
+	}
+	
+	@Override
 	public void send(DatagramPacket dgPacket){
 		//manipular o buffer que esta no data gram
 		byte[] buffer = dgPacket.getData();
+		
 		
 		//at the end, call the super, to send the datagram to the multicast host
 		try {
 			super.send(dgPacket);
 		} catch (IOException e) {
-			System.out.println("Falhou o envio do datagram." + "Na clase:" + e.getClass().getName() + " | " + e.getMessage());
+			System.out.println("Falhou o envio do datagram." + "Na classe:" + e.getClass().getName() + " | " + e.getMessage());
 			//e.printStackTrace();
 		}
 	}
