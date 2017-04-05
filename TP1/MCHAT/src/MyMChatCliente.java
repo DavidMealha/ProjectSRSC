@@ -1,14 +1,10 @@
 
 public class MyMChatCliente extends MChatCliente {
 	
-	//tipo de encriptação
-	//algoritmo de hashing
-	//tudo isso é lido do ficheiro de configuração
 	public MyMChatCliente(){
 		super();
 	}
 
-	@Override
 	protected void doSendMesage(String message){
 		//encriptar a mensagem por aqui?
 		//antes de a enviar, utilizar o algoritmo de encriptação que está no ficheiro de configuração.
@@ -30,7 +26,7 @@ public class MyMChatCliente extends MChatCliente {
 		//Ciphersuite <algorithm/mode/padding> exemple: AES/CBC/PKCS #5
 		//
 		//A mensagem deverá ser cifrada com a seguinte estrutura:
-		//VER || 0x00 (??) || TAMANHO DO PAYLOAD || PAYLOAD
+		//VER || 0x00 || TAMANHO DO PAYLOAD || PAYLOAD
 		//PAYLOAD - mensagem cifrada com prova de autenticidade e integridade e um nonce(??)
 		
 
