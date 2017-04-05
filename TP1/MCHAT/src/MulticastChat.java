@@ -26,7 +26,7 @@ public class MulticastChat extends Thread {
   // Multicast socket used to send and receive multicast protocol PDUs
   // Socket Multicast usado para enviar e receber mensagens 
   // no ambito das operacoes que tem lugar no Chat
-  protected MulticastSocket msocket;
+  protected MySecureMulticastSocket msocket;
 
   // Username / User-Nick-Name do Chat
   protected String username;
@@ -52,7 +52,7 @@ public class MulticastChat extends Thread {
     isActive = true;
 
     // create & configure multicast socket
-    msocket = new MulticastSocket(port);
+    msocket = new MySecureMulticastSocket(port);
     msocket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT_MILLIS);
     msocket.setTimeToLive(ttl);
     msocket.joinGroup(group);

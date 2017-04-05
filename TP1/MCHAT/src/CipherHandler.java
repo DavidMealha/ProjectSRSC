@@ -22,9 +22,11 @@ public class CipherHandler {
 		
 		//get instance of cipher
 		Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS7Padding", "BC");
-		cipher.init(Cipher.ENCRYPT_MODE,
-	            new SecretKeySpec(keyBytes, "DESede"),
-	            new IvParameterSpec(ivBytes));
+//		cipher.init(Cipher.ENCRYPT_MODE,
+//	            new SecretKeySpec(keyBytes, "DESede"),
+//	            new IvParameterSpec(ivBytes));
+		
+		return buffer;
 	}
 	
 	public static void decipherText(byte[] buffer){
