@@ -20,18 +20,17 @@ public class FileHandler {
 				if(!line.startsWith("#")){
 					String[] lineSplitted =  line.split(":");
 					String key = lineSplitted[0];
-					String value = lineSplitted[1];
+					String value = lineSplitted[1].split("#")[0].trim();
 					
-					if (key == "PBE") {
+					if (key.equals("PBE")) {
 						pbe.setAlgorithm(value);
-					}else if(key == "SALT"){
+					}else if(key.equals("SALT")){
 						pbe.setSalt(Utils.stringToByteArray(value));
-					}else if(key == "CTR"){
+					}else if(key.equals("CTR")){
 						pbe.setCounter(Integer.parseInt(value));
 					}
-					
-					line = br.readLine();
 				}
+				line = br.readLine();
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
