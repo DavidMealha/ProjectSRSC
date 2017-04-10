@@ -3,14 +3,22 @@ package filegenerator;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
+import application.CipherHandler;
 import application.PBEConfiguration;
 import application.Utils;
 
 public class FileGenerator {
 
-	public static void main(String[] args) throws NoSuchAlgorithmException {
+	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 		//create PBEConfiguration to ease the exchange of values between methods
 		PBEConfiguration pbe = new PBEConfiguration();
 		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
@@ -47,18 +55,20 @@ public class FileGenerator {
 	}
 	
 	public static void createCrypto(String filename, PBEConfiguration pbe, String password, String algorithm, int keySize, 
-			String macAlgorithm, int macKeySize) {
+			String macAlgorithm, int macKeySize) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 
 		String fileContent = "CIPHERSUITE: " + algorithm + "\n" + 
 							 "KEYSIZE: " + keySize + "\n" + 
 							 "KEYVALUE: " + "" + "\n" +
 					 		 "MAC: " + macAlgorithm + "\n" + 
 				 		 	 "MACKEYSIZE: " + macKeySize + "\n" +
-				 		 	 "MACKEYVALUE: " + "" + "\n";
+				 		 	 "MACKEYVALUE: " + "";
+		
+		String cipheredFile = CipherHandler.cipherFileWithPBE(password, pbe, fileContent);
 							 
 		try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
 			
-			bw.write(fileContent);
+			bw.write(cipheredFile);
 			// no need to close it.
 			//bw.close();
 			System.out.println("Crypto File Created!");

@@ -48,6 +48,7 @@ public class CipherHandler {
 	
 	/**
 	 * Method to cipher the file with the ciphering configuration with PBEncryption
+	 * @return 
 	 * @throws NoSuchAlgorithmException 
 	 * @throws InvalidKeySpecException 
 	 * @throws NoSuchPaddingException 
@@ -56,11 +57,11 @@ public class CipherHandler {
 	 * @throws BadPaddingException 
 	 * @throws IllegalBlockSizeException 
 	 */
-	public static void cipherFileWithPBE(String password, String multicastAddress) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException{
+	public static String cipherFileWithPBE(String password, PBEConfiguration pbe, String fileContent) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException{
 		//before putting the password here, we should hash it, also authenticate with the hash.
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
 		
-		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(multicastAddress + ".pbe");
+		//PBEConfiguration pbe = FileHandler.readPBEncryptionFile(multicastAddress + ".pbe");
 		
 		//e.g ("PBEWithHmacSHA256AndAES_256")
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());
@@ -74,9 +75,9 @@ public class CipherHandler {
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
 		
-		byte[] cipheredFile = cipher.doFinal("FileStuff..:".getBytes());
+		byte[] cipheredFile = cipher.doFinal(fileContent.getBytes());
 		
-		FileHandler.writeCiphersuiteFile(multicastAddress + ".crypto", cipheredFile);
+		return Utils.toHex(cipheredFile);
 	}
 	
 	/**
