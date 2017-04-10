@@ -3,15 +3,8 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
-
-import javax.crypto.NoSuchPaddingException;
-
-import DatasetParser.QA;
 
 /**
  * classe para fazer o handling dos ficheiros de configuração 
@@ -20,21 +13,19 @@ import DatasetParser.QA;
  */
 public class FileHandler {
 	
-	public static void writeCiphersuiteFile(String filename) throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException{
+	/**
+	 * Method to write into the file the cipher configuration content already ciphered
+	 * @param filename
+	 * @param content
+	 */
+	public static void writeCiphersuiteFile(String filename, byte[] content) {
 		try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
-			
-			//do this when it will be needed to cipher the .crypto file
-			//bw.write(Utils.toHex(CipherHandler.cipherFileWithPBE("ABCABCABC".getBytes())));
+			bw.write(Utils.toHex(content));
 			
 			// no need to close it.
 			//bw.close();
-
-			System.out.println("Done");
-
 		} catch (IOException e) {
-
-			e.printStackTrace();
-
+			System.out.println("Failed to write ciphered file." + e.getMessage());
 		}
 	}
 	
@@ -42,28 +33,31 @@ public class FileHandler {
 	 * Method to read the crypto configuration file
 	 * @param filename
 	 */
-	public static void readCiphersuiteFile(String filename){
+	public static CipherConfiguration readCiphersuiteFile(String filename){
 		//still missing the unciphering of the .crypto file, to do later!!!
+		//Since this will be ciphered, this can't be like this, just read the file and return the String
+		//Then after the unciphering in the CipherHandler we can parse the information to an object
 		HashMap<String, String> hashmap = getKeyValuesFromFile(filename);
 		
-		CipherConfiguration cipher = new CipherConfiguration();
+		CipherConfiguration cipherConfiguration = new CipherConfiguration();
 		
 		for (Map.Entry<String, String> entry : hashmap.entrySet()) {
 			switch(entry.getKey()){
-				case "CIPHERSUITE": cipher.setCiphersuite(entry.getValue());
+				case "CIPHERSUITE": cipherConfiguration.setCiphersuite(entry.getValue());
 					break;
-				case "KEYSIZE": cipher.setKeySize(Integer.parseInt(entry.getValue()));
+				case "KEYSIZE": cipherConfiguration.setKeySize(Integer.parseInt(entry.getValue()));
 					break;
-				case "KEYVALUE": cipher.setKeyValue(Utils.stringToByteArray(entry.getValue()));
+				case "KEYVALUE": cipherConfiguration.setKeyValue(Utils.stringToByteArray(entry.getValue()));
 					break;
-				case "MAC": cipher.setMacAlgorithm(entry.getValue());
+				case "MAC": cipherConfiguration.setMacAlgorithm(entry.getValue());
 					break;
-				case "MACKEYSIZE": cipher.setMacKeySize(Integer.parseInt(entry.getValue()));
+				case "MACKEYSIZE": cipherConfiguration.setMacKeySize(Integer.parseInt(entry.getValue()));
 					break;
-				case "MACKEYVALUE": cipher.setMacKeyValue(Utils.stringToByteArray(entry.getValue()));
+				case "MACKEYVALUE": cipherConfiguration.setMacKeyValue(Utils.stringToByteArray(entry.getValue()));
 					break;
 			}
 		}
+		return cipherConfiguration;
 	}
 	
 	/**
