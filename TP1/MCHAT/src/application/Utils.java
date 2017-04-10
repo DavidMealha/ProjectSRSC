@@ -1,4 +1,4 @@
-package filegenerator;
+package application;
 
 /**
  * Classe auxiliar

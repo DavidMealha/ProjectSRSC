@@ -1,3 +1,4 @@
+package application;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -68,7 +69,7 @@ public class CipherHandler {
 		SecretKey key = keyFactory.generateSecret(keySpec);
 		
 		//The params salt and counter are added to the PBE
-		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt(), pbe.getCounter());
+		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
 		
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
@@ -106,7 +107,7 @@ public class CipherHandler {
 		SecretKey key = keyFactory.generateSecret(keySpec);
 		
 		//The params salt and counter are added to the PBE
-		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt(), pbe.getCounter());
+		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
 		
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);

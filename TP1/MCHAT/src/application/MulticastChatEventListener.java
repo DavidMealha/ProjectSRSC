@@ -1,3 +1,4 @@
+package application;
 // MulticastChatEventListener.java
 
 import java.net.InetAddress;
