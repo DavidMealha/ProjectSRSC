@@ -1,6 +1,8 @@
 package filegenerator;
 
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -18,7 +20,7 @@ import application.Utils;
 
 public class FileGenerator {
 
-	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
 		//create PBEConfiguration to ease the exchange of values between methods
 		PBEConfiguration pbe = new PBEConfiguration();
 		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
@@ -58,7 +60,7 @@ public class FileGenerator {
 	}
 	
 	public static void createCrypto(String filename, PBEConfiguration pbe, String password, String algorithm, int keySize, 
-			String macAlgorithm, int macKeySize) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+			String macAlgorithm, int macKeySize) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
 
 		String fileContent = "CIPHERSUITE: " + algorithm + "\n" + 
 							 "KEYSIZE: " + keySize + "\n" + 
@@ -67,17 +69,25 @@ public class FileGenerator {
 				 		 	 "MACKEYSIZE: " + macKeySize + "\n" +
 				 		 	 "MACKEYVALUE: " + "";
 		
-		String cipheredFile = CipherHandler.cipherFileWithPBE(password, pbe, fileContent);
-							 
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
-			
-			bw.write(cipheredFile);
-			// no need to close it.
-			//bw.close();
-			System.out.println("Crypto File Created!");
-		} catch (IOException e) {
-			System.out.println("Failed to write ciphered file." + e.getMessage());
+		byte[] cipheredFile = CipherHandler.cipherFileWithPBE(password, pbe, fileContent);
+		
+		FileOutputStream stream = new FileOutputStream(filename);
+		try {
+		    stream.write(cipheredFile);
+		} finally {
+		    stream.close();
 		}
+		
+		
+//		try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
+//			
+//			bw.write(cipheredFile);
+//			// no need to close it.
+//			//bw.close();
+//			System.out.println("Crypto File Created!");
+//		} catch (IOException e) {
+//			System.out.println("Failed to write ciphered file." + e.getMessage());
+//		}
 	}
 
 }

@@ -1,6 +1,8 @@
 package application;
+import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
@@ -57,9 +59,9 @@ public class CipherHandler {
 	 * @throws BadPaddingException 
 	 * @throws IllegalBlockSizeException 
 	 */
-	public static String cipherFileWithPBE(String password, PBEConfiguration pbe, String fileContent) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException{
+	public static byte[] cipherFileWithPBE(String password, PBEConfiguration pbe, String fileContent) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException{
 		//before putting the password here, we should hash it, also authenticate with the hash.
-		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), pbe.getSalt().getBytes(), pbe.getCounter(), 192);
+		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
 		
 		//PBEConfiguration pbe = FileHandler.readPBEncryptionFile(multicastAddress + ".pbe");
 		
@@ -70,16 +72,18 @@ public class CipherHandler {
 		SecretKey key = keyFactory.generateSecret(keySpec);
 		
 		//The params salt and counter are added to the PBE
-		//PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
+		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
 		
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
-		cipher.init(Cipher.ENCRYPT_MODE, key);
+		cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
 		
 		byte[] cipheredFile = cipher.doFinal(fileContent.getBytes());
 		System.out.println("UNCIPHERED FILE HAS: " + fileContent.getBytes().length + "bytes.");
 		System.out.println("CIPHERING FILE NOW, WITH: " + cipheredFile.length + "bytes.");
 		System.out.println("CIPHERING FILE NOW, WITH: " + Utils.toHex(cipheredFile).getBytes().length + "bytes.");
-		return Utils.toHex(cipheredFile);
+		System.out.println("GENERATED KEY : " + Utils.toHex(key.getEncoded()));
+		System.out.println("CIPHERED FILE IN CIPHER METHOD: " + Utils.toHex(cipheredFile));
+		return cipheredFile;
 	}
 	
 	/**
@@ -91,14 +95,15 @@ public class CipherHandler {
 	 * @throws InvalidKeyException 
 	 * @throws BadPaddingException 
 	 * @throws IllegalBlockSizeException 
+	 * @throws IOException 
 	 */
-	public static void uncipherFileWithPBE(String password, String multicastAddress) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException{		
-		byte[] cipheredFile = FileHandler.readCiphersuiteFileEncrypted("configs/" + multicastAddress + ".crypto").getBytes();
+	public static void uncipherFileWithPBE(String password, String multicastAddress) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException{		
+		byte[] cipheredFile = FileHandler.readCiphersuiteFileEncrypted("configs/" + multicastAddress + ".crypto");
 		
 		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("configs/" + multicastAddress + ".pbe");
 		
 		//Create PBEKeySpec for the password given
-		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), pbe.getSalt().getBytes(), pbe.getCounter(), 192);
+		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
 		
 		//e.g ("PBEWithHmacSHA256AndAES_256")
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());
@@ -107,14 +112,15 @@ public class CipherHandler {
 		SecretKey key = keyFactory.generateSecret(keySpec);
 		
 		//The params salt and counter are added to the PBE
-		//PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
+		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
 		
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
-		cipher.init(Cipher.DECRYPT_MODE, key);
+		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 		
-		System.out.println("CIPHERED FILE HAS: " + cipheredFile.length + "bytes.");
+		System.out.println("CIPHERED FILE IN UNCIPHER METHOD: " + Utils.toHex(cipheredFile));
 		byte[] uncipheredFile = cipher.doFinal(cipheredFile);
-		System.out.println("OUTPUT DO .CRYPTO: " + uncipheredFile);
+		System.out.println("=================================");
+		System.out.println("OUTPUT DO .CRYPTO: " + new String(uncipheredFile, "UTF-8"));
 		//now that i have the plain text unciphered, can parse to CipherConfiguration class
 		//CipherConfiguration cipherConfiguration = FileHandler.readCiphersuiteFile(multicastAddress + ".crypto");
 	}

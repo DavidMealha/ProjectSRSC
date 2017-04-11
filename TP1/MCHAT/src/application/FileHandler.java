@@ -1,9 +1,14 @@
 package application;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,16 +70,31 @@ public class FileHandler {
 	 * Method to read the ciphersuite file that's is ciphered. 
 	 * @param filename
 	 * @return
+	 * @throws IOException 
 	 */
-	public static String readCiphersuiteFileEncrypted(String filename) {
-		try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
-			String line = br.readLine();
-			
-			return line;
-		} catch (IOException e) {
-			System.out.println("Failed to read the ciphersuite encrypted file." + e.getMessage());
-		}
-		return null;
+	public static byte[] readCiphersuiteFileEncrypted(String filename) throws IOException {
+//		FileInputStream stream = new FileInputStream(filename);
+//		int length = filename.length();
+//		
+//		byte[] byteArray = new byte[(int)length];
+//		
+//		try {
+//		    stream.read(b)
+//		} finally {
+//		    stream.close();
+//		}
+		
+		Path fileLocation = Paths.get(filename);
+		byte[] data = Files.readAllBytes(fileLocation);
+		
+//		try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+//			String line = br.readLine();
+//			
+//			return line;
+//		} catch (IOException e) {
+//			System.out.println("Failed to read the ciphersuite encrypted file." + e.getMessage());
+//		}
+		return data;
 	}
 	
 	/**
