@@ -1,13 +1,15 @@
 package application;
+
 //aux class to handle the pbe config file
 public class PBEConfiguration {
-	
+
 	private String algorithm;
 	private String salt;
 	private int counter;
-	
-	public PBEConfiguration() {}
-	
+
+	public PBEConfiguration() {
+	}
+
 	public PBEConfiguration(String algorithm, String salt, int counter) {
 		super();
 		this.algorithm = algorithm;
@@ -38,6 +40,5 @@ public class PBEConfiguration {
 	public void setCounter(int counter) {
 		this.counter = counter;
 	}
-	
-	
+
 }

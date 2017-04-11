@@ -1,8 +1,8 @@
 package application;
+
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
@@ -17,7 +17,9 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
 /**
- * class para encriptar e desencriptar os byte arrays que serão enviados e recebidos nos datagram packets
+ * class para encriptar e desencriptar os byte arrays que serão enviados e
+ * recebidos nos datagram packets
+ * 
  * @author David
  *
  */
@@ -31,97 +33,108 @@ public class CipherHandler {
 	 * @throws NoSuchProviderException
 	 * @throws NoSuchPaddingException
 	 */
-	public static byte[] cipherText(byte[] buffer, String multicastAddress, String ciphersuite, int keySize, byte[] keyValue, String macAlgorithm, int macKeySize, byte[] macKeyValue) throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException{
-		//read configuration file
-		FileHandler.readCiphersuiteFile(multicastAddress + ".crypto");
-		
-		//get instance of cipher
-		Cipher cipher = Cipher.getInstance(ciphersuite, "BC");
+	public static byte[] cipherText(byte[] buffer, String multicastAddress, String ciphersuite, int keySize,
+			byte[] keyValue, String macAlgorithm, int macKeySize, byte[] macKeyValue)
+			throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
+		// read configuration file
+//		FileHandler.readCiphersuiteFile(multicastAddress + ".crypto");
+
+		// get instance of cipher
+//		Cipher cipher = Cipher.getInstance(ciphersuite, "BC");
 //		cipher.init(Cipher.ENCRYPT_MODE,
-//	            new SecretKeySpec(keyBytes, "DESede"),
-//	            new IvParameterSpec(ivBytes));
-		
+//				new SecretKeySpec(keyBytes, "DESede"),
+//				new IvParameterSpec(ivBytes));
+
 		return buffer;
 	}
-	
-	public static void decipherText(byte[] buffer){
-		
+
+	public static void decipherText(byte[] buffer) {
+
 	}
-	
+
 	/**
-	 * Method to cipher the file with the ciphering configuration with PBEncryption
-	 * @return 
-	 * @throws NoSuchAlgorithmException 
-	 * @throws InvalidKeySpecException 
-	 * @throws NoSuchPaddingException 
-	 * @throws InvalidAlgorithmParameterException 
-	 * @throws InvalidKeyException 
-	 * @throws BadPaddingException 
-	 * @throws IllegalBlockSizeException 
+	 * Method to cipher the file with the ciphering configuration with
+	 * PBEncryption
+	 * 
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws InvalidKeySpecException
+	 * @throws NoSuchPaddingException
+	 * @throws InvalidAlgorithmParameterException
+	 * @throws InvalidKeyException
+	 * @throws BadPaddingException
+	 * @throws IllegalBlockSizeException
 	 */
-	public static byte[] cipherFileWithPBE(String password, PBEConfiguration pbe, String fileContent) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException{
-		//before putting the password here, we should hash it, also authenticate with the hash.
+	public static byte[] cipherFileWithPBE(String password, PBEConfiguration pbe, String fileContent)
+			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
+			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		// before putting the password here, we should hash it, also
+		// authenticate with the hash.
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
-		
-		//PBEConfiguration pbe = FileHandler.readPBEncryptionFile(multicastAddress + ".pbe");
-		
-		//e.g ("PBEWithHmacSHA256AndAES_256")
+
+		// PBEConfiguration pbe =
+		// FileHandler.readPBEncryptionFile(multicastAddress + ".pbe");
+
+		// e.g ("PBEWithHmacSHA256AndAES_256")
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());
-		
-		//The key is created
+
+		// The key is created
 		SecretKey key = keyFactory.generateSecret(keySpec);
-		
-		//The params salt and counter are added to the PBE
+
+		// The params salt and counter are added to the PBE
 		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
-		
+
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
-		
+
 		byte[] cipheredFile = cipher.doFinal(fileContent.getBytes());
-		System.out.println("UNCIPHERED FILE HAS: " + fileContent.getBytes().length + "bytes.");
-		System.out.println("CIPHERING FILE NOW, WITH: " + cipheredFile.length + "bytes.");
-		System.out.println("CIPHERING FILE NOW, WITH: " + Utils.toHex(cipheredFile).getBytes().length + "bytes.");
-		System.out.println("GENERATED KEY : " + Utils.toHex(key.getEncoded()));
+
 		System.out.println("CIPHERED FILE IN CIPHER METHOD: " + Utils.toHex(cipheredFile));
 		return cipheredFile;
 	}
-	
+
 	/**
-	 * Method to uncipher the file with the ciphering configuration with PBEncryption
-	 * @throws NoSuchAlgorithmException 
-	 * @throws InvalidKeySpecException 
-	 * @throws NoSuchPaddingException 
-	 * @throws InvalidAlgorithmParameterException 
-	 * @throws InvalidKeyException 
-	 * @throws BadPaddingException 
-	 * @throws IllegalBlockSizeException 
-	 * @throws IOException 
+	 * Method to uncipher the file with the ciphering configuration with
+	 * PBEncryption
+	 * 
+	 * @throws NoSuchAlgorithmException
+	 * @throws InvalidKeySpecException
+	 * @throws NoSuchPaddingException
+	 * @throws InvalidAlgorithmParameterException
+	 * @throws InvalidKeyException
+	 * @throws BadPaddingException
+	 * @throws IllegalBlockSizeException
+	 * @throws IOException
 	 */
-	public static void uncipherFileWithPBE(String password, String multicastAddress) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException{		
+	public static void uncipherFileWithPBE(String password, String multicastAddress)
+			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
+			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
+		//read the ciphered file, that is save as a byte[], if stored as string it gives problems
 		byte[] cipheredFile = FileHandler.readCiphersuiteFileEncrypted("configs/" + multicastAddress + ".crypto");
-		
+
 		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("configs/" + multicastAddress + ".pbe");
-		
-		//Create PBEKeySpec for the password given
+
+		// Create PBEKeySpec for the password given
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
-		
-		//e.g ("PBEWithHmacSHA256AndAES_256")
+
+		// e.g ("PBEWithHmacSHA256AndAES_256")
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());
-		
-		//the key is created
+
+		// the key is created
 		SecretKey key = keyFactory.generateSecret(keySpec);
-		
-		//The params salt and counter are added to the PBE
+
+		// The params salt and counter are added to the PBE
 		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
-		
+
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
-		
+
 		System.out.println("CIPHERED FILE IN UNCIPHER METHOD: " + Utils.toHex(cipheredFile));
 		byte[] uncipheredFile = cipher.doFinal(cipheredFile);
 		System.out.println("=================================");
-		System.out.println("OUTPUT DO .CRYPTO: " + new String(uncipheredFile, "UTF-8"));
-		//now that i have the plain text unciphered, can parse to CipherConfiguration class
-		//CipherConfiguration cipherConfiguration = FileHandler.readCiphersuiteFile(multicastAddress + ".crypto");
+		System.out.println("OUTPUT DO .CRYPTO:\n " + new String(uncipheredFile, "UTF-8"));
+		// now that i have the plain text unciphered, can parse to
+		// CipherConfiguration class
+		// CipherConfiguration cipherConfiguration =
 	}
 }

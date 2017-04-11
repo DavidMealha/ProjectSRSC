@@ -7,8 +7,9 @@ public class CipherConfiguration {
 	private String macAlgorithm;
 	private int macKeySize;
 	private byte[] macKeyValue;
-	
-	public CipherConfiguration() {}
+
+	public CipherConfiguration() {
+	}
 
 	public String getCiphersuite() {
 		return ciphersuite;
@@ -58,5 +59,4 @@ public class CipherConfiguration {
 		this.macKeyValue = macKeyValue;
 	}
 
-	
 }

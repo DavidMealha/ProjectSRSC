@@ -1,7 +1,6 @@
 package filegenerator;
 
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,6 +17,11 @@ import application.CipherHandler;
 import application.PBEConfiguration;
 import application.Utils;
 
+/**
+ * Class to generate the .pbe and .crypto files.
+ * @author David
+ *
+ */
 public class FileGenerator {
 
 	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
@@ -77,17 +81,6 @@ public class FileGenerator {
 		} finally {
 		    stream.close();
 		}
-		
-		
-//		try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
-//			
-//			bw.write(cipheredFile);
-//			// no need to close it.
-//			//bw.close();
-//			System.out.println("Crypto File Created!");
-//		} catch (IOException e) {
-//			System.out.println("Failed to write ciphered file." + e.getMessage());
-//		}
 	}
 
 }
