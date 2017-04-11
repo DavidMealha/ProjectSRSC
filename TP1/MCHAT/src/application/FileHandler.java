@@ -62,6 +62,22 @@ public class FileHandler {
 	}
 	
 	/**
+	 * Method to read the ciphersuite file that's is ciphered. 
+	 * @param filename
+	 * @return
+	 */
+	public static String readCiphersuiteFileEncrypted(String filename) {
+		try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+			String line = br.readLine();
+			
+			return line;
+		} catch (IOException e) {
+			System.out.println("Failed to read the ciphersuite encrypted file." + e.getMessage());
+		}
+		return null;
+	}
+	
+	/**
 	 * Method to read the pbe configuration file
 	 * @param filename
 	 * @return
@@ -71,7 +87,7 @@ public class FileHandler {
 		
 		PBEConfiguration pbe = new PBEConfiguration();
 		pbe.setAlgorithm(hashmap.get("PBE"));
-		pbe.setSalt(Utils.stringToByteArray(hashmap.get("SALT")));
+		pbe.setSalt(hashmap.get("SALT"));
 		pbe.setCounter(Integer.parseInt(hashmap.get("CTR")));
 
 		return pbe;

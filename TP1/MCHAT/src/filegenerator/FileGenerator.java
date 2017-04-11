@@ -21,14 +21,17 @@ public class FileGenerator {
 	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 		//create PBEConfiguration to ease the exchange of values between methods
 		PBEConfiguration pbe = new PBEConfiguration();
-		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
-		pbe.setSalt(Utils.toHex(KeyGenerator.generateSalt(16)));
+		//pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
+		pbe.setAlgorithm("PBEWithSHAAnd3KeyTripleDES");
+		pbe.setSalt(Utils.toHex(KeyGenerator.generateSalt(8)));
 		pbe.setCounter(10);
 		
 		//how to generate the counter?
 		createPBE("configs/224.9.9.9.pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
 		
 		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CTR/NoPadding", 128, "HMacSHA1", 60);
+		
+		CipherHandler.uncipherFileWithPBE("password", "224.9.9.9");
 
 	}
 	
