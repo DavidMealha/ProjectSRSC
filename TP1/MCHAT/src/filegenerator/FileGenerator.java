@@ -15,7 +15,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import application.CipherHandler;
 import application.PBEConfiguration;
-import application.Utils;
+import application.UtilsBase;
 
 /**
  * Class to generate the .pbe and .crypto files.
@@ -29,7 +29,7 @@ public class FileGenerator {
 		PBEConfiguration pbe = new PBEConfiguration();
 		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
 		//pbe.setAlgorithm("PBEWithSHAAnd3KeyTripleDES");
-		pbe.setSalt(Utils.toHex(KeyGenerator.generateSalt(8)));
+		pbe.setSalt(UtilsBase.toHex(KeyGenerator.generateSalt(8)));
 		pbe.setCounter(1024);
 		
 		//how to generate the counter?

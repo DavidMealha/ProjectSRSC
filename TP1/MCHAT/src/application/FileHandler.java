@@ -25,19 +25,21 @@ public class FileHandler {
 	 * @param filename
 	 * @param content
 	 */
-//	public static void writeCiphersuiteFile(String filename, byte[] content) {
-//		try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
-//			bw.write(Utils.toHex(content));
-//
-//			// no need to close it.
-//			// bw.close();
-//		} catch (IOException e) {
-//			System.out.println("Failed to write ciphered file." + e.getMessage());
-//		}
-//	}
+	// public static void writeCiphersuiteFile(String filename, byte[] content)
+	// {
+	// try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
+	// bw.write(Utils.toHex(content));
+	//
+	// // no need to close it.
+	// // bw.close();
+	// } catch (IOException e) {
+	// System.out.println("Failed to write ciphered file." + e.getMessage());
+	// }
+	// }
 
 	/**
 	 * Method to read the ciphersuite file that's is ciphered.
+	 * 
 	 * @param filename
 	 * @return
 	 * @throws IOException

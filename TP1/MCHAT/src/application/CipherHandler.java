@@ -3,8 +3,10 @@ package application;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,11 +14,15 @@ import java.util.Map;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.crypto.tls.HashAlgorithm;
 
@@ -36,15 +42,55 @@ public class CipherHandler {
 	 * @throws NoSuchAlgorithmException
 	 * @throws NoSuchProviderException
 	 * @throws NoSuchPaddingException
+	 * @throws InvalidAlgorithmParameterException
+	 * @throws InvalidKeyException
+	 * @throws ShortBufferException
+	 * @throws IllegalStateException
+	 * @throws BadPaddingException
+	 * @throws IllegalBlockSizeException
 	 */
 	public static byte[] cipherText(byte[] buffer, CipherConfiguration cipherConfiguration)
-			throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
+			throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException,
+			InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException,
+			IllegalStateException {
+		// check if it's ecb, and then add no IV? or just assume it will use
+		// safe modes, like CBC or CTR
+
+		// create a secure random
+		SecureRandom random = new SecureRandom();
+
+		// generate an initialization vector, with a counter
+		IvParameterSpec ivSpec = Utils.createCtrIvForAES(1, random);
+
+		// generate a random key, with some bits, and with a random number
+		// (cipherConfiguration.getKeyValue())
+		// (cipherConfiguration.getKeySize())
+		Key key = Utils.createKey(256, random);
 
 		// get instance of cipher
 		Cipher cipher = Cipher.getInstance(cipherConfiguration.getCiphersuite(), "BC");
-//		cipher.init(Cipher.ENCRYPT_MODE,
-//				new SecretKeySpec(keyBytes, "DESede"),
-//				new IvParameterSpec(ivBytes));
+
+		// get instance of MAC
+		Mac mac = Mac.getInstance(cipherConfiguration.getMacAlgorithm(), "BC");
+
+		// generate byte array for the key MAC
+		byte[] macKeyBytes = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+
+		// generate the mac key
+		Key macKey = new SecretKeySpec(macKeyBytes, cipherConfiguration.getMacAlgorithm());
+
+		// initialize encryption mode
+		cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+
+		// creates byte array with the size of the ciphered text and mac
+		byte[] cipherText = new byte[cipher.getOutputSize(buffer.length + mac.getMacLength())];
+
+		int ctLength = cipher.update(buffer, 0, buffer.length, cipherText, 0);
+
+		mac.init(macKey);
+		mac.update(buffer);
+
+		ctLength += cipher.doFinal(mac.doFinal(), 0, mac.getMacLength(), cipherText, ctLength);
 
 		return buffer;
 	}
@@ -90,7 +136,7 @@ public class CipherHandler {
 
 		byte[] cipheredFile = cipher.doFinal(fileContent.getBytes());
 
-		System.out.println("CIPHERED FILE IN CIPHER METHOD: " + Utils.toHex(cipheredFile));
+		System.out.println("CIPHERED FILE IN CIPHER METHOD: " + UtilsBase.toHex(cipheredFile));
 		return cipheredFile;
 	}
 
@@ -110,7 +156,8 @@ public class CipherHandler {
 	public static CipherConfiguration uncipherFileWithPBE(String password, String multicastAddress)
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
-		//read the ciphered file, that is save as a byte[], if stored as string it gives problems
+		// read the ciphered file, that is save as a byte[], if stored as string
+		// it gives problems
 		byte[] cipheredFile = FileHandler.readCiphersuiteFileEncrypted("configs/" + multicastAddress + ".crypto");
 
 		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("configs/" + multicastAddress + ".pbe");
@@ -130,51 +177,60 @@ public class CipherHandler {
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 
-		System.out.println("CIPHERED FILE IN UNCIPHER METHOD: " + Utils.toHex(cipheredFile));
+		System.out.println("CIPHERED FILE IN UNCIPHER METHOD: " + UtilsBase.toHex(cipheredFile));
 		byte[] uncipheredFile = cipher.doFinal(cipheredFile);
 		String uncipheredContent = new String(uncipheredFile, "UTF-8");
 		System.out.println("=================================");
 		System.out.println("OUTPUT DO .CRYPTO:\n" + uncipheredContent);
-		
-		// now that i have the plain text unciphered, can parse to CipherConfiguration class	
+
+		// now that i have the plain text unciphered, can parse to
+		// CipherConfiguration class
 		return parseFileContentToCipherConfiguration(uncipheredContent);
 	}
-	
+
 	/**
-	 * Auxiliar method to parse the unciphered file content into the object CipherConfiguration, 
-	 * in order to have all the information of the ciphersuite in a structured way.
+	 * Auxiliar method to parse the unciphered file content into the object
+	 * CipherConfiguration, in order to have all the information of the
+	 * ciphersuite in a structured way.
+	 * 
 	 * @param fileContent
 	 * @return
 	 */
-	private static CipherConfiguration parseFileContentToCipherConfiguration(String fileContent){
+	private static CipherConfiguration parseFileContentToCipherConfiguration(String fileContent) {
 		String[] splitLines = fileContent.split("\n");
 		HashMap<String, String> ciphersuiteValues = new HashMap<String, String>();
-		
+
 		for (String line : splitLines) {
 			String[] lineSplitted = line.split(":");
 			String key = lineSplitted[0];
 			String value = lineSplitted[1].split("#")[0].trim();
 			ciphersuiteValues.put(key, value);
 		}
-		
+
 		CipherConfiguration cipherConfiguration = new CipherConfiguration();
-        for (Map.Entry<String, String> entry : ciphersuiteValues.entrySet()) {
-            switch(entry.getKey()){
-                case "CIPHERSUITE": cipherConfiguration.setCiphersuite(entry.getValue());
-                    break;
-                case "KEYSIZE": cipherConfiguration.setKeySize(Integer.parseInt(entry.getValue()));
-                    break;
-                case "KEYVALUE": cipherConfiguration.setKeyValue(Utils.stringToByteArray(entry.getValue()));
-                    break;
-                case "MAC": cipherConfiguration.setMacAlgorithm(entry.getValue());
-                    break;
-                case "MACKEYSIZE": cipherConfiguration.setMacKeySize(Integer.parseInt(entry.getValue()));
-                    break;
-                case "MACKEYVALUE": cipherConfiguration.setMacKeyValue(Utils.stringToByteArray(entry.getValue()));
-                    break;
-            }
-        }
-		
+		for (Map.Entry<String, String> entry : ciphersuiteValues.entrySet()) {
+			switch (entry.getKey()) {
+			case "CIPHERSUITE":
+				cipherConfiguration.setCiphersuite(entry.getValue());
+				break;
+			case "KEYSIZE":
+				cipherConfiguration.setKeySize(Integer.parseInt(entry.getValue()));
+				break;
+			case "KEYVALUE":
+				cipherConfiguration.setKeyValue(UtilsBase.stringToByteArray(entry.getValue()));
+				break;
+			case "MAC":
+				cipherConfiguration.setMacAlgorithm(entry.getValue());
+				break;
+			case "MACKEYSIZE":
+				cipherConfiguration.setMacKeySize(Integer.parseInt(entry.getValue()));
+				break;
+			case "MACKEYVALUE":
+				cipherConfiguration.setMacKeyValue(UtilsBase.stringToByteArray(entry.getValue()));
+				break;
+			}
+		}
+
 		return cipherConfiguration;
 	}
 }
