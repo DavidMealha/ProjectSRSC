@@ -59,7 +59,7 @@ public class CipherHandler {
 	 */
 	public static String cipherFileWithPBE(String password, PBEConfiguration pbe, String fileContent) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException{
 		//before putting the password here, we should hash it, also authenticate with the hash.
-		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), pbe.getSalt().getBytes(), pbe.getCounter());
+		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), pbe.getSalt().getBytes(), pbe.getCounter(), 192);
 		
 		//PBEConfiguration pbe = FileHandler.readPBEncryptionFile(multicastAddress + ".pbe");
 		
@@ -76,7 +76,9 @@ public class CipherHandler {
 		cipher.init(Cipher.ENCRYPT_MODE, key);
 		
 		byte[] cipheredFile = cipher.doFinal(fileContent.getBytes());
-		
+		System.out.println("UNCIPHERED FILE HAS: " + fileContent.getBytes().length + "bytes.");
+		System.out.println("CIPHERING FILE NOW, WITH: " + cipheredFile.length + "bytes.");
+		System.out.println("CIPHERING FILE NOW, WITH: " + Utils.toHex(cipheredFile).getBytes().length + "bytes.");
 		return Utils.toHex(cipheredFile);
 	}
 	
@@ -96,7 +98,7 @@ public class CipherHandler {
 		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("configs/" + multicastAddress + ".pbe");
 		
 		//Create PBEKeySpec for the password given
-		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), pbe.getSalt().getBytes(), pbe.getCounter());
+		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), pbe.getSalt().getBytes(), pbe.getCounter(), 192);
 		
 		//e.g ("PBEWithHmacSHA256AndAES_256")
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());
@@ -110,6 +112,7 @@ public class CipherHandler {
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key);
 		
+		System.out.println("CIPHERED FILE HAS: " + cipheredFile.length + "bytes.");
 		byte[] uncipheredFile = cipher.doFinal(cipheredFile);
 		System.out.println("OUTPUT DO .CRYPTO: " + uncipheredFile);
 		//now that i have the plain text unciphered, can parse to CipherConfiguration class
