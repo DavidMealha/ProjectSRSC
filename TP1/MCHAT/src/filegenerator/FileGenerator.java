@@ -6,7 +6,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.BadPaddingException;
@@ -15,6 +18,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import application.CipherHandler;
 import application.PBEConfiguration;
+import application.Utils;
 import application.UtilsBase;
 
 /**
@@ -24,7 +28,7 @@ import application.UtilsBase;
  */
 public class FileGenerator {
 
-	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
+	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException, NoSuchProviderException {
 		//create PBEConfiguration to ease the exchange of values between methods
 		PBEConfiguration pbe = new PBEConfiguration();
 		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
@@ -35,7 +39,7 @@ public class FileGenerator {
 		//how to generate the counter?
 		createPBE("configs/224.9.9.9.pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
 		
-		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CTR/NoPadding", 128, "HMacSHA1", 60);
+		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CTR/NoPadding", 128, "HMacSHA1", 64);
 		
 		CipherHandler.uncipherFileWithPBE("password", "224.9.9.9");
 
@@ -64,14 +68,24 @@ public class FileGenerator {
 	}
 	
 	public static void createCrypto(String filename, PBEConfiguration pbe, String password, String algorithm, int keySize, 
-			String macAlgorithm, int macKeySize) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
-
+			String macAlgorithm, int macKeySize) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException, NoSuchProviderException {
+		
+		//create key for the cipher suite
+		SecureRandom random = new SecureRandom();
+		byte[] key = Utils.createKey(keySize, random, algorithm.split("/")[0]);
+		
+		//create key for the mac
+		SecureRandom random2 = new SecureRandom();
+		byte[] macKey = Utils.createKey(macKeySize, random2, macAlgorithm.split("/")[0]);
+		
 		String fileContent = "CIPHERSUITE: " + algorithm + "\n" + 
 							 "KEYSIZE: " + keySize + "\n" + 
-							 "KEYVALUE: " + "" + "\n" +
+							 "KEYVALUE: " + Utils.toHex(key) + "\n" +
 					 		 "MAC: " + macAlgorithm + "\n" + 
 				 		 	 "MACKEYSIZE: " + macKeySize + "\n" +
-				 		 	 "MACKEYVALUE: " + "";
+				 		 	 "MACKEYVALUE: " + Utils.toHex(macKey);
+		
+		System.out.println(fileContent);
 		
 		byte[] cipheredFile = CipherHandler.cipherFileWithPBE(password, pbe, fileContent);
 		

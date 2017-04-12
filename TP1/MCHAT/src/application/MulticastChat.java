@@ -1,5 +1,5 @@
 package application;
-// MulticastChat.java
+
 
 // Objecto que representa um chat Multicast
 

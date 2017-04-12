@@ -1,5 +1,6 @@
 package application;
 
+
 /**
  * Classe auxiliar
  */

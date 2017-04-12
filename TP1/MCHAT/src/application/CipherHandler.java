@@ -1,12 +1,13 @@
 package application;
 
+
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,8 +25,6 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.bouncycastle.crypto.tls.HashAlgorithm;
-
 /**
  * class para encriptar e desencriptar os byte arrays que serão enviados e
  * recebidos nos datagram packets
@@ -38,16 +37,17 @@ public class CipherHandler {
 	/**
 	 * 
 	 * @param buffer
-	 * @return buffer encriptado
+	 * @param cipherConfiguration
+	 * @return
 	 * @throws NoSuchAlgorithmException
 	 * @throws NoSuchProviderException
 	 * @throws NoSuchPaddingException
-	 * @throws InvalidAlgorithmParameterException
 	 * @throws InvalidKeyException
+	 * @throws InvalidAlgorithmParameterException
 	 * @throws ShortBufferException
-	 * @throws IllegalStateException
-	 * @throws BadPaddingException
 	 * @throws IllegalBlockSizeException
+	 * @throws BadPaddingException
+	 * @throws IllegalStateException
 	 */
 	public static byte[] cipherText(byte[] buffer, CipherConfiguration cipherConfiguration)
 			throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException,
@@ -55,17 +55,30 @@ public class CipherHandler {
 			IllegalStateException {
 		// check if it's ecb, and then add no IV? or just assume it will use
 		// safe modes, like CBC or CTR
-
-		// create a secure random
-		SecureRandom random = new SecureRandom();
-
+		System.out.println("===================================================================================");
+		System.out.println("HEX MESSAGE IN CIPHER TEXT BEFORE BEING CIPHERED: " + Utils.toHex(buffer));
+		System.out.println("BYTE[] MESSAGE IN CIPHER TEXT BEFORE BEING CIPHERED: " + buffer);
+		System.out.println("===================================================================================");
+		
 		// generate an initialization vector, with a counter
-		IvParameterSpec ivSpec = Utils.createCtrIvForAES(1, random);
+		//IvParameterSpec ivSpec = Utils.createCtrIvForAES(1, random);
+		byte[]	ivBytes = 
+	            new byte[] { 0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 ,
+	                         0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 
+		};
+		
+		IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 
-		// generate a random key, with some bits, and with a random number
-		// (cipherConfiguration.getKeyValue())
-		// (cipherConfiguration.getKeySize())
-		Key key = Utils.createKey(256, random);
+		// read the key that was generated randomly
+		//SecretKey key = new SecretKeySpec(cipherConfiguration.getKeyValue(), 0, cipherConfiguration.getKeySize(), cipherConfiguration.getCiphersuite().split("/")[0]);
+		byte[]	keyBytes = new byte[] { 
+		        0x01, 0x23, 0x45, 0x67, (byte)0x89, (byte)0xab,(byte)0xcd, (byte)0xef, 
+		        0x01, 0x23, 0x45, 0x67, (byte)0x89, (byte)0xab,(byte)0xcd, (byte)0xef, 
+		        0x01, 0x23, 0x45, 0x67, (byte)0x89, (byte)0xab,(byte)0xcd, (byte)0xef ,
+		        0x01, 0x23, 0x45, 0x67, (byte)0x89, (byte)0xab,(byte)0xcd, (byte)0xef
+			};
+		
+		SecretKey key = new SecretKeySpec(keyBytes, cipherConfiguration.getCiphersuite().split("/")[0]);
 
 		// get instance of cipher
 		Cipher cipher = Cipher.getInstance(cipherConfiguration.getCiphersuite(), "BC");
@@ -77,13 +90,17 @@ public class CipherHandler {
 		byte[] macKeyBytes = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
 		// generate the mac key
-		Key macKey = new SecretKeySpec(macKeyBytes, cipherConfiguration.getMacAlgorithm());
+		Key macKey = new SecretKeySpec(macKeyBytes, "DES");
 
 		// initialize encryption mode
 		cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
 		// creates byte array with the size of the ciphered text and mac
 		byte[] cipherText = new byte[cipher.getOutputSize(buffer.length + mac.getMacLength())];
+		
+		System.out.println("HEX MESSAGE IN CIPHER TEXT AFTER BEING CIPHERED: " + Utils.toHex(cipherText));
+		System.out.println("BYTE[] MESSAGE IN CIPHER TEXT AFTER BEING CIPHERED: " + cipherText);
+		System.out.println("===================================================================================");
 
 		int ctLength = cipher.update(buffer, 0, buffer.length, cipherText, 0);
 
@@ -92,11 +109,73 @@ public class CipherHandler {
 
 		ctLength += cipher.doFinal(mac.doFinal(), 0, mac.getMacLength(), cipherText, ctLength);
 
-		return buffer;
+		return cipherText;
 	}
 
-	public static void decipherText(byte[] buffer) {
+	/**
+	 * 
+	 * @param buffer
+	 * @param cipherConfiguration
+	 * @return
+	 * @throws InvalidKeyException 
+	 * @throws BadPaddingException 
+	 * @throws IllegalBlockSizeException 
+	 * @throws NoSuchPaddingException 
+	 * @throws NoSuchProviderException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws UnsupportedEncodingException 
+	 * @throws InvalidAlgorithmParameterException 
+	 */
+	public static byte[] uncipherText(byte[] buffer, CipherConfiguration cipherConfiguration) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, UnsupportedEncodingException, InvalidAlgorithmParameterException {
+		
+		System.out.println("===================================================================================");
+		System.out.println("HEX MESSAGE IN uncipherText BEFORE BEING UNCIPHERED: " + Utils.toHex(buffer));
+		System.out.println("BYTE[] MESSAGE IN uncipherText TEXT BEFORE BEING UNCIPHERED: " + buffer);
+		System.out.println("===================================================================================");
+		
+		byte[]	ivBytes = 
+	            new byte[] { 0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 ,
+	                         0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 
+		};
+		
+		IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+		
+		// read the key that was generated randomly
+		//SecretKey key = new SecretKeySpec(cipherConfiguration.getKeyValue(), 0, cipherConfiguration.getKeySize(), cipherConfiguration.getCiphersuite().split("/")[0]);
+		byte[]	keyBytes = new byte[] { 
+		        0x01, 0x23, 0x45, 0x67, (byte)0x89, (byte)0xab,(byte)0xcd, (byte)0xef, 
+		        0x01, 0x23, 0x45, 0x67, (byte)0x89, (byte)0xab,(byte)0xcd, (byte)0xef, 
+		        0x01, 0x23, 0x45, 0x67, (byte)0x89, (byte)0xab,(byte)0xcd, (byte)0xef ,
+		        0x01, 0x23, 0x45, 0x67, (byte)0x89, (byte)0xab,(byte)0xcd, (byte)0xef
+			};
+		
+		SecretKey key = new SecretKeySpec(keyBytes, cipherConfiguration.getCiphersuite().split("/")[0]);
+		
+		// get instance of cipher
+		Cipher cipher = Cipher.getInstance(cipherConfiguration.getCiphersuite(), "BC");
+		
+		// get instance of MAC
+		Mac mac = Mac.getInstance(cipherConfiguration.getMacAlgorithm(), "BC");
+		
+		// generate byte array for the key MAC
+		byte[] macKeyBytes = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
+		cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+		
+        byte[] plainText = cipher.doFinal(buffer, 0, buffer.length);
+        int    messageLength = plainText.length - mac.getMacLength();
+        
+		//System.out.println("HEX MESSAGE IN CIPHER TEXT AFTER BEING UNCIPHERED: " + Utils.toHex(plainText));
+		//System.out.println("BYTE[] MESSAGE IN CIPHER TEXT AFTER BEING UNCIPHERED: " + plainText);
+        
+        // Verificaao Mac
+        mac.init(new SecretKeySpec(macKeyBytes, "DES"));
+        mac.update(plainText, 0, messageLength);
+        
+        byte[] messageHash = new byte[mac.getMacLength()];
+        System.arraycopy(plainText, messageLength, messageHash, 0, messageHash.length);
+        
+		return plainText;
 	}
 
 	/**
@@ -177,7 +256,6 @@ public class CipherHandler {
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 
-		System.out.println("CIPHERED FILE IN UNCIPHER METHOD: " + UtilsBase.toHex(cipheredFile));
 		byte[] uncipheredFile = cipher.doFinal(cipheredFile);
 		String uncipheredContent = new String(uncipheredFile, "UTF-8");
 		System.out.println("=================================");
@@ -230,7 +308,10 @@ public class CipherHandler {
 				break;
 			}
 		}
-
+		
+		System.out.println("BYTE ARRAY OF KEY VALUE INSIDE THE FILE: " + cipherConfiguration.getKeyValue());
+		System.out.println("BYTE ARRAY LENGTH OF KEY VALUE INSIDE THE FILE: " + cipherConfiguration.getKeyValue().length);
+ 
 		return cipherConfiguration;
 	}
 }

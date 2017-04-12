@@ -1,5 +1,6 @@
 package application;
 
+
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
@@ -22,13 +23,13 @@ public class Utils extends UtilsBase {
 	 * @throws NoSuchAlgorithmException
 	 * @throws NoSuchProviderException
 	 */
-	public static SecretKey createKey(int bitLength, SecureRandom random)
+	public static byte[] createKey(int bitLength, SecureRandom random, String algorithm)
 			throws NoSuchAlgorithmException, NoSuchProviderException {
-		KeyGenerator generator = KeyGenerator.getInstance("AES", "BC");
+		KeyGenerator generator = KeyGenerator.getInstance(algorithm, "BC");
 
 		generator.init(bitLength, random);
 
-		return generator.generateKey();
+		return generator.generateKey().getEncoded();
 	}
 
 	/**

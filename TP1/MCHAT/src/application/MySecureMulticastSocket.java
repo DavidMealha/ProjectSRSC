@@ -1,5 +1,6 @@
 package application;
 
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
@@ -57,16 +58,9 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	public void send(DatagramPacket dgPacket) {
 		// manipular o buffer que esta no data gram
 		byte[] buffer = dgPacket.getData();
-		String s = null;
+		
 		try {
-			 s = new String(buffer, "UTF-8");
-		} catch (UnsupportedEncodingException e2) {
-			// TODO Auto-generated catch block
-			//e2.printStackTrace();
-		}
-
-		try {
-			buffer = CipherHandler.cipherText(buffer, cipherConfiguration);
+			buffer = CipherHandler.cipherText(buffer, this.cipherConfiguration);
 		} catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException
 				| InvalidAlgorithmParameterException | ShortBufferException | IllegalBlockSizeException
 				| BadPaddingException | IllegalStateException e1) {
@@ -74,7 +68,9 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		}
 
 		// after encrypting the buffer, it's time to finally send it
+		dgPacket.setLength(buffer.length);
 		dgPacket.setData(buffer);
+		
 
 		// at the end, call the super, to send the datagram to the multicast
 		// host
@@ -83,19 +79,37 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		} catch (IOException e) {
 			System.out.println(
 					"Falhou o envio do datagram." + "Na classe:" + e.getClass().getName() + " | " + e.getMessage());
-			//e.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 	
-//	@Override
-//	public void receive(DatagramPacket dgPacket){
-//		try {
-//			super.receive(dgPacket);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
+	@Override
+	public void receive(DatagramPacket dgPacket){
+		// manipular o buffer que esta no data gram
+		byte[] buffer = dgPacket.getData();
+			
+		try {
+			buffer = CipherHandler.uncipherText(buffer, this.cipherConfiguration);
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException
+				| NoSuchProviderException | NoSuchPaddingException | UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (InvalidAlgorithmParameterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		// after uncrypting the buffer, it's time to finally send it
+		dgPacket.setLength(buffer.length);
+		dgPacket.setData(buffer);
+				
+		try {
+			super.receive(dgPacket);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	public CipherConfiguration getCipherConfiguration() {
 		return cipherConfiguration;
