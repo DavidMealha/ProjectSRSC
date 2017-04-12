@@ -1,6 +1,5 @@
 package application;
 
-
 // Objecto que representa um chat Multicast
 
 import java.io.ByteArrayInputStream;

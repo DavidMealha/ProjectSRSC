@@ -1,6 +1,5 @@
 package application;
 
-
 // 
 
 import java.awt.BorderLayout;

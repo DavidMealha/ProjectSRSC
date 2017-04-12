@@ -1,6 +1,5 @@
 package application;
 
-
 import java.net.InetAddress;
 
 public interface MulticastChatEventListener extends java.util.EventListener {

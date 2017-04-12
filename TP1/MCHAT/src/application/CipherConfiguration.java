@@ -1,13 +1,14 @@
 package application;
 
+import java.io.Serializable;
 
-public class CipherConfiguration {
+public class CipherConfiguration implements Serializable {
 	private String ciphersuite;
 	private int keySize;
-	private byte[] keyValue;
+	private String keyValue;
 	private String macAlgorithm;
 	private int macKeySize;
-	private byte[] macKeyValue;
+	private String macKeyValue;
 
 	public CipherConfiguration() {
 	}
@@ -28,11 +29,11 @@ public class CipherConfiguration {
 		this.keySize = keySize;
 	}
 
-	public byte[] getKeyValue() {
+	public String getKeyValue() {
 		return keyValue;
 	}
 
-	public void setKeyValue(byte[] keyValue) {
+	public void setKeyValue(String keyValue) {
 		this.keyValue = keyValue;
 	}
 
@@ -52,12 +53,19 @@ public class CipherConfiguration {
 		this.macKeySize = macKeySize;
 	}
 
-	public byte[] getMacKeyValue() {
+	public String getMacKeyValue() {
 		return macKeyValue;
 	}
 
-	public void setMacKeyValue(byte[] macKeyValue) {
+	public void setMacKeyValue(String macKeyValue) {
 		this.macKeyValue = macKeyValue;
+	}
+
+	@Override
+	public String toString() {
+		return "CIPHERSUITE: " + this.ciphersuite + "\n" + "KEYSIZE: " + this.keySize + "\n" + "KEYVALUE: "
+				+ this.keyValue + "\n" + "MAC: " + this.macAlgorithm + "\n" + "MACKEYSIZE: " + this.macKeySize + "\n"
+				+ "MACKEYVALUE: " + this.macKeyValue;
 	}
 
 }

@@ -1,11 +1,13 @@
 package application;
 
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,10 +28,10 @@ public class FileHandler {
 	 * @return
 	 * @throws IOException
 	 */
-	public static byte[] readCiphersuiteFileEncrypted(String filename) throws IOException {
-		Path fileLocation = Paths.get(filename);
-		byte[] data = Files.readAllBytes(fileLocation);
-		return data;
+	public static InputStream readCiphersuiteFileEncrypted(String filename) throws IOException {
+		InputStream inputStream = null;
+		inputStream = new FileInputStream(filename);
+		return inputStream;
 	}
 
 	/**
