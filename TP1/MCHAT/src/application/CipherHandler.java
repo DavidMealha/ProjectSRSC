@@ -62,6 +62,7 @@ public class CipherHandler {
 			IllegalStateException {
 		// check if it's ecb, and then add no IV? or just assume it will use
 		// safe modes, like CBC or CTR
+		//when it's ECB or CBC the buffer size should be multiple of the block size.
 
 		// generate an initialization vector, with a counter
 		// IvParameterSpec ivSpec = Utils.createCtrIvForAES(1, random);
@@ -89,7 +90,6 @@ public class CipherHandler {
 
 		int ctLength = cipher.update(buffer, 0, buffer.length, cipherText, 0);
 		
-		System.out.println("KEY SIZE:" + macKey.getEncoded().length);
 		mac.init(macKey);
 		mac.update(buffer);
 

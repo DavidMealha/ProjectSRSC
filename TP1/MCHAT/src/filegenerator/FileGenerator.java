@@ -41,15 +41,15 @@ public class FileGenerator {
 		// create PBEConfiguration to ease the exchange of values between
 		// methods
 		PBEConfiguration pbe = new PBEConfiguration();
-		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
-		// pbe.setAlgorithm("PBEWithSHAAnd3KeyTripleDES");
+//		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
+		pbe.setAlgorithm("PBEWithSHAAnd3KeyTripleDES");
 		pbe.setSalt(UtilsBase.toHex(KeyGenerator.generateSalt(8)));
 		pbe.setCounter(1024);
 
 		// how to generate the counter?
 		createPBE("configs/224.9.9.9.pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
 
-		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CTR/NoPadding", 128, "HMacSHA1", 64);
+		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CTR/NoPadding", 256, "DES", 64);
 
 		CipherHandler.uncipherFileWithPBE("password", "224.9.9.9").toString();
 

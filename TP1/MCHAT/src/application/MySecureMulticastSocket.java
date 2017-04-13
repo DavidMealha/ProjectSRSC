@@ -45,7 +45,7 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		} catch (InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException
 				| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
 				| ClassNotFoundException e) {
-			System.out.println("Failed to uncipher the ciphersuite." + e.getMessage());
+			System.out.println("Failed to parse the ciphersuite." + e.getMessage());
 			// e.printStackTrace();
 		}
 
