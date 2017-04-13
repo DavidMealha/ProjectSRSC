@@ -8,17 +8,14 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.BadPaddingException;
-import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SealedObject;
 
 import application.CipherConfiguration;
 import application.CipherHandler;
@@ -49,7 +46,7 @@ public class FileGenerator {
 		// how to generate the counter?
 		createPBE("configs/224.9.9.9.pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
 
-		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CTR/NoPadding", 256, "DES", 64);
+		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CBC/PKCS5Padding", 256, "DES", 64);
 
 		CipherHandler.uncipherFileWithPBE("password", "224.9.9.9").toString();
 

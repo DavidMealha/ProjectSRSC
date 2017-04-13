@@ -21,4 +21,20 @@ Algoritmos de hashing existentes:
 -SHA512
 
 
+Possible combinations:
 
+Ciphersuite:
+-AES/CTR/NoPadding
+-DES/CBC/PKCS5Padding
+-AES/CBC/NoPadding ; if the input is the same size or multiple of the key of AES
+-AES/CBC/PKCS7Padding
+-DES/ECB/NoPadding
+-DES/CTR/PKCS5Padding
+
+
+Mac:
+-DES
+-HMacSHA1
+
+Digest/Hash(MessageDigest   hash = MessageDigest.getInstance("SHA1", "BC"):
+-SHA1

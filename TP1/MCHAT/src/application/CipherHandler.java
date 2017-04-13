@@ -123,15 +123,7 @@ public class CipherHandler {
 
 		IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 
-		// read the key that was generated randomly
-		// SecretKey key = new SecretKeySpec(cipherConfiguration.getKeyValue(),
-		// 0, cipherConfiguration.getKeySize(),
-		// cipherConfiguration.getCiphersuite().split("/")[0]);
-		byte[] keyBytes = new byte[] { 0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef, 0x01,
-				0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef, 0x01, 0x23, 0x45, 0x67,
-				(byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef, 0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab,
-				(byte) 0xcd, (byte) 0xef };
-
+		// read the key that was generated in the file
 		SecretKey key = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getKeyValue()), cipherConfiguration.getCiphersuite().split("/")[0]);
 
 		// get instance of cipher
@@ -139,20 +131,23 @@ public class CipherHandler {
 
 		// get instance of MAC
 		Mac mac = Mac.getInstance(cipherConfiguration.getMacAlgorithm(), "BC");
+		
+		// generate the mac key
+		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()), cipherConfiguration.getMacAlgorithm());
 
 		// generate byte array for the key MAC
 		byte[] macKeyBytes = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
 		cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 		
-		byte[] plainText = new byte[cipher.getOutputSize(buffer.length + mac.getMacLength())];
-		int ctLength = cipher.update(buffer, 0, buffer.length, plainText, 0);
-		
+		int ctLength = buffer.length;
+		byte[] plainText = cipher.doFinal(buffer, 0, ctLength);
+			
 		int messageLength = plainText.length - mac.getMacLength();
 
 		// Verificaao Mac
-		mac.init(new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()), cipherConfiguration.getMacAlgorithm()));
-		mac.update(plainText, 0, ctLength);
+		mac.init(macKey);
+		mac.update(plainText, 0, messageLength);
 
 		byte[] messageHash = new byte[mac.getMacLength()];
 		System.arraycopy(plainText, messageLength, messageHash, 0, messageHash.length);

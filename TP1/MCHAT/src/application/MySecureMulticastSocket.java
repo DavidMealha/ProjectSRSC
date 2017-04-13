@@ -1,7 +1,9 @@
 package application;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
@@ -64,11 +66,10 @@ public class MySecureMulticastSocket extends MulticastSocket {
 			| BadPaddingException | IllegalStateException e1) {
 			System.out.println("Failed to cipher message." + e1.getMessage());
 		}
-		System.out.println("THE CIPHERED TEXT IS: " + Utils.toHex(buffer));
+		System.out.println("THE CIPHERED TEXT IS: " + buffer.length);
 
 		// after encrypting the buffer, it's time to finally send it
-		//dgPacket.setLength(buffer.length);
-		//dgPacket.setData(buffer);
+		DatagramPacket newDgPacket = new DatagramPacket(buffer, buffer.length, dgPacket.getAddress(), dgPacket.getPort());
 
 		// at the end, call the super, to send the datagram to the multicast host
 		try {
@@ -85,24 +86,27 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		// manipular o buffer que esta no data gram
 		byte[] buffer = dgPacket.getData();
 		
+		DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(dgPacket.getData(), dgPacket.getOffset(), dgPacket.getLength()));
+		long magicNumber = dataStream.readLong();
+		int type = dataStream.readInt();
+		String username = dataStream.readUTF();
+		String message = dataStream.readUTF();
+		
+		String payload = magicNumber + type + username + message;
+		byte[] textToCipher = payload.getBytes();
+		
+		try {
+			buffer = CipherHandler.uncipherText(buffer, this.cipherConfiguration);
+		} catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException
+			| InvalidAlgorithmParameterException | ShortBufferException | IllegalBlockSizeException
+			| BadPaddingException | IllegalStateException e) {
+			System.out.println("Failed to uncipher message." + e.getMessage());
+		}
+		System.out.println("THE UNCIPHERED TEXT IS: " + buffer);
 
-//		try {
-//			buffer = CipherHandler.uncipherText(buffer, this.cipherConfiguration);
-//		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException
-//				| NoSuchProviderException | NoSuchPaddingException | UnsupportedEncodingException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		} catch (InvalidAlgorithmParameterException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (ShortBufferException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//
-//		// after uncrypting the buffer, it's time to finally send it
-//		dgPacket.setLength(buffer.length);
-//		dgPacket.setData(buffer);
+		// after uncrypting the buffer, it's time to finally send it
+		//DatagramPacket newDgPacket = new DatagramPacket(dataUncrypted, dataUncrypted.length, dgPacket.getAddress(), dgPacket.getPort());
+		
 		super.receive(dgPacket);
 		
 	}
