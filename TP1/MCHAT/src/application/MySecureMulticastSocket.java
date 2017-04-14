@@ -14,6 +14,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -66,10 +67,8 @@ public class MySecureMulticastSocket extends MulticastSocket {
 			| BadPaddingException | IllegalStateException e1) {
 			System.out.println("Failed to cipher message." + e1.getMessage());
 		}
-		System.out.println("THE CIPHERED TEXT IS: " + buffer.length);
-
-		// after encrypting the buffer, it's time to finally send it
-		DatagramPacket newDgPacket = new DatagramPacket(buffer, buffer.length, dgPacket.getAddress(), dgPacket.getPort());
+		// after encrypting the buffer, it's time to finally set it
+		dgPacket.setData(buffer);
 
 		// at the end, call the super, to send the datagram to the multicast host
 		try {
@@ -83,32 +82,23 @@ public class MySecureMulticastSocket extends MulticastSocket {
 
 	@Override
 	public void receive(DatagramPacket dgPacket) throws IOException {
-		// manipular o buffer que esta no data gram
-		byte[] buffer = dgPacket.getData();
 		
-		DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(dgPacket.getData(), dgPacket.getOffset(), dgPacket.getLength()));
-		long magicNumber = dataStream.readLong();
-		int type = dataStream.readInt();
-		String username = dataStream.readUTF();
-		String message = dataStream.readUTF();
+		//first receive the datagram to get the real buffer with the correct length
+		super.receive(dgPacket);
 		
-		String payload = magicNumber + type + username + message;
-		byte[] textToCipher = payload.getBytes();
-		
+		// create a byte[] with the ciphered data
+		byte[] buffer = new byte[dgPacket.getLength()]; 
+		System.arraycopy(dgPacket.getData(), dgPacket.getOffset(), buffer, 0, dgPacket.getLength());
+				
 		try {
-			buffer = CipherHandler.uncipherText(buffer, this.cipherConfiguration);
+			buffer = CipherHandler.uncipherText(buffer, dgPacket.getLength(), this.cipherConfiguration);
 		} catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException
 			| InvalidAlgorithmParameterException | ShortBufferException | IllegalBlockSizeException
 			| BadPaddingException | IllegalStateException e) {
 			System.out.println("Failed to uncipher message." + e.getMessage());
 		}
-		System.out.println("THE UNCIPHERED TEXT IS: " + buffer);
-
-		// after uncrypting the buffer, it's time to finally send it
-		//DatagramPacket newDgPacket = new DatagramPacket(dataUncrypted, dataUncrypted.length, dgPacket.getAddress(), dgPacket.getPort());
-		
-		super.receive(dgPacket);
-		
+		//set the data of the packet with the unciphered buffer, changing by reference
+		dgPacket.setData(buffer);	
 	}
 
 	public CipherConfiguration getCipherConfiguration() {
@@ -116,12 +106,6 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	}
 
 	public void setCipherConfiguration(CipherConfiguration cipherConfiguration) {
-		// this.cipherConfiguration.setCiphersuite(cipherConfiguration.getCiphersuite());
-		// this.cipherConfiguration.setKeySize(keySize);
-		// this.cipherConfiguration.setKeyValue(keyValue);
-		// this.cipherConfiguration.setMacAlgorithm(macAlgorithm);
-		// this.cipherConfiguration.setMacKeyValue(macKeyValue);
-		// this.cipherConfiguration.setMacKeyValue(macKeyValue);
 		this.cipherConfiguration = cipherConfiguration;
 	}
 
@@ -132,34 +116,5 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	public void setPbe(PBEConfiguration pbe) {
 		this.pbe = pbe;
 	}
-
-	// encriptar a mensagem por aqui?
-	// antes de a enviar, utilizar o algoritmo de encriptação que está no
-	// ficheiro de configuração.
-	//
-	// Garantir aos utilizadores confidencialidade, integridade e autenticidade
-	// das mensagens
-	// Garantir também a autenticação e o controlo de acesso às conversas,
-	// apenas para
-	// utilizadores devidamente autorizados.
-	//
-	// Os ficheiros de configuração estão protegidos através de PBE,
-	// a configuração esta em sala.crype(e.g 224.10.101.0),
-	// send o conteúdo acessível no inicio da aplicação ao pedir a password
-	// ao utilizador
-	//
-	// A parameterização do esquema PBE deve de estar noutro ficheiro,
-	// mais concretamente sala.pbe(e.g 224.10.10.10.pbe)
-	//
-	// O sistema deverá ser totalmente parameterizavel, de modo a permitir
-	// encriptação
-	// com os algoritmos presentes nos ficheiros de configuração.
-	//
-	// Ciphersuite <algorithm/mode/padding> exemple: AES/CBC/PKCS #5
-	//
-	// A mensagem deverá ser cifrada com a seguinte estrutura:
-	// VER || 0x00 || TAMANHO DO PAYLOAD || PAYLOAD
-	// PAYLOAD - mensagem cifrada com prova de autenticidade e integridade e um
-	// nonce(??)
 
 }

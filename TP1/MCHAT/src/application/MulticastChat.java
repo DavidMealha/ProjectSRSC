@@ -104,6 +104,7 @@ public class MulticastChat extends Thread {
 		try {
 			listener.chatParticipantJoined(name, address, port);
 		} catch (Throwable e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -170,13 +171,13 @@ public class MulticastChat extends Thread {
 	@Override
 	public void run() {
 		byte[] buffer = new byte[65508];
-		DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-
+		DatagramPacket packet = null;
 		while (isActive) {
 			try {
 
 				// Comprimento do DatagramPacket RESET antes do request
-				packet.setLength(buffer.length);
+				packet = new DatagramPacket(buffer, buffer.length);
+				//packet.setLength(buffer.length);
 				msocket.receive(packet);
 
 				DataInputStream istream = new DataInputStream(
@@ -212,7 +213,8 @@ public class MulticastChat extends Thread {
 				 */
 
 			} catch (Throwable e) {
-				error("Processing error: " + e.getClass().getName() + ": " + e.getMessage());
+				//error("Processing error: " + e.getClass().getName() + ": " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 
