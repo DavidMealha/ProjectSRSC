@@ -26,30 +26,46 @@ import application.UtilsBase;
 /**
  * Class to generate the .pbe and .crypto files.
  * 
- * @author David
+ * @author David, Ricardo
  *
  */
 public class FileGenerator {
 
+	private static final String LOGFILESDIR = "configs/";
+	
 	public static void main(String[] args)
 			throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
 			NoSuchProviderException, ClassNotFoundException {
-		// create PBEConfiguration to ease the exchange of values between
-		// methods
-		PBEConfiguration pbe = new PBEConfiguration();
-//		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
-		pbe.setAlgorithm("PBEWithSHAAnd3KeyTripleDES");
-		pbe.setSalt(UtilsBase.toHex(KeyGenerator.generateSalt(8)));
-		pbe.setCounter(1024);
-
-		// how to generate the counter?
-		createPBE("configs/224.9.9.9.pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
-
-		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CBC/PKCS5Padding", 256, "DES", 64);
-
-		CipherHandler.uncipherFileWithPBE("password", "224.9.9.9").toString();
-
+		
+		if (args.length != 9) {
+			System.out.println("Check if you have inserted all the arguments.");
+			System.out.println("args : filename/host password PBEAlgorithm SaltSize PBECounter CiphersuiteAlgorithm KeySize MacAlgorithm MacKeySize");
+			System.out.println("e.g  : 224.10.10.10 password PBEWithSHAAnd3KeyTripleDES 8 1024 AES/CBC/PKCS5Padding 256 DES 64");
+		} else {
+			String filename = args[0];
+			String password = args[1];
+			String PBEAlgorithm = args[2];
+			int PBESaltSize = Integer.parseInt(args[3]);
+			int PBECounter = Integer.parseInt(args[4]);
+			String CiphersuiteAlgorithm = args[5];
+			int CiphersuiteKeySize = Integer.parseInt(args[6]);
+			String MacAlgorithm = args[7];
+			int MacKeySize = Integer.parseInt(args[8]);
+			
+			PBEConfiguration pbe = new PBEConfiguration();
+//			pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
+//			pbe.setAlgorithm("PBEWithSHAAnd3KeyTripleDES");
+			pbe.setAlgorithm(PBEAlgorithm);
+			pbe.setSalt(UtilsBase.toHex(KeyGenerator.generateSalt(PBESaltSize)));
+			pbe.setCounter(PBECounter);
+		
+			createPBE(LOGFILESDIR + filename + ".pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
+			
+			createCrypto(LOGFILESDIR + filename + "crypto", pbe, password, CiphersuiteAlgorithm, CiphersuiteKeySize, MacAlgorithm, MacKeySize);
+			
+			//CipherHandler.uncipherFileWithPBE(password, filename).toString();
+		}
 	}
 
 	/**
