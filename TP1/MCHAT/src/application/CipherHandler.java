@@ -185,7 +185,7 @@ public class CipherHandler {
 		SecretKey key = keyFactory.generateSecret(keySpec);
 
 		// The params salt and counter are added to the PBE
-		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt(), pbe.getCounter());
+		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
 
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
@@ -233,7 +233,7 @@ public class CipherHandler {
 		SecretKey key = keyFactory.generateSecret(keySpec);
 
 		// The params salt and counter are added to the PBE
-		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt(), pbe.getCounter());
+		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
 
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
@@ -245,59 +245,4 @@ public class CipherHandler {
 		sealedObject = (SealedObject) inputStream.readObject();
 		return (CipherConfiguration) sealedObject.getObject(cipher);
 	}
-
-	/**
-	 * Auxiliar method to parse the unciphered file content into the object
-	 * CipherConfiguration, in order to have all the information of the
-	 * ciphersuite in a structured way.
-	 * 
-	 * @param fileContent
-	 * @return
-	 */
-	// private static CipherConfiguration
-	// parseFileContentToCipherConfiguration(String fileContent) {
-	// String[] splitLines = fileContent.split("\n");
-	// HashMap<String, String> ciphersuiteValues = new HashMap<String,
-	// String>();
-	//
-	// for (String line : splitLines) {
-	// String[] lineSplitted = line.split(":");
-	// String key = lineSplitted[0];
-	// String value = lineSplitted[1].trim().replace(" ", "");
-	// ciphersuiteValues.put(key, value);
-	// }
-	//
-	// CipherConfiguration cipherConfiguration = new CipherConfiguration();
-	// for (Map.Entry<String, String> entry : ciphersuiteValues.entrySet()) {
-	// switch (entry.getKey()) {
-	// case "CIPHERSUITE":
-	// cipherConfiguration.setCiphersuite(entry.getValue());
-	// break;
-	// case "KEYSIZE":
-	// cipherConfiguration.setKeySize(Integer.parseInt(entry.getValue()));
-	// break;
-	// case "KEYVALUE":
-	// cipherConfiguration.setKeyValue(entry.getValue().getBytes());
-	// break;
-	// case "MAC":
-	// cipherConfiguration.setMacAlgorithm(entry.getValue());
-	// break;
-	// case "MACKEYSIZE":
-	// cipherConfiguration.setMacKeySize(Integer.parseInt(entry.getValue()));
-	// break;
-	// case "MACKEYVALUE":
-	// cipherConfiguration.setMacKeyValue(UtilsBase.stringToByteArray(entry.getValue()));
-	// break;
-	// }
-	// }
-	//
-	// System.out.println("BYTE ARRAY OF KEY VALUE INSIDE THE FILE: " +
-	// cipherConfiguration.getKeyValue());
-	// System.out.println("HEX OF KEY VALUE INSIDE THE FILE: " +
-	// Utils.toHex(cipherConfiguration.getKeyValue()));
-	// System.out.println("BYTE ARRAY LENGTH OF KEY VALUE INSIDE THE FILE: " +
-	// cipherConfiguration.getKeyValue().length);
-	//
-	// return cipherConfiguration;
-	// }
 }

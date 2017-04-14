@@ -1,4 +1,4 @@
-package application;
+package filegenerator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,7 +10,9 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
+import application.FileHandler;
 import application.PBEConfiguration;
+import application.Utils;
 
 /**
  * This class generates the .crypto file giving a user password and with the existing pbe file
@@ -59,7 +61,7 @@ public class DynamicPBEncryptor {
         // Cipher 
         Cipher cEnc = Cipher.getInstance( pbeParam.getAlgorithm(),"BC");
         System.out.println(Utils.toHex(sKey.getEncoded()));
-        cEnc.init(Cipher.ENCRYPT_MODE, sKey, new PBEParameterSpec(pbeParam.getSalt(), pbeParam.getCounter()));
+        cEnc.init(Cipher.ENCRYPT_MODE, sKey, new PBEParameterSpec(pbeParam.getSalt().getBytes(), pbeParam.getCounter()));
 
         byte[] encryptedOut = cEnc.doFinal(data);
         

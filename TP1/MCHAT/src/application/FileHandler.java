@@ -41,16 +41,7 @@ public class FileHandler {
 
 		PBEConfiguration pbe = new PBEConfiguration();
 		pbe.setAlgorithm(hashmap.get("PBE"));
-		//we need to read the hexadecimal values from the String and for that is more easy to remove "0x"
-		String salt = hashmap.get("SALT");
-		String[] parseSalt = salt.split(" ");
-		String finalSaltHex = "";
-		
-		for(int i = 0; i < parseSalt.length; i++){
-			finalSaltHex += parseSalt[i].substring(2);
-		}
-		pbe.setSalt(Utils.toByteArray(finalSaltHex));
-		
+		pbe.setSalt(hashmap.get("SALT"));
 		pbe.setCounter(Integer.parseInt(hashmap.get("CTR")));
 
 		return pbe;
