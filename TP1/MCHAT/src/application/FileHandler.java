@@ -1,22 +1,18 @@
 package application;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
 import java.util.HashMap;
+import application.Utils;
 
 /**
  * classe para fazer o handling dos ficheiros de configuração
  * 
- * @author David
+ * @authors David, Ricardo 
  *
  */
 public class FileHandler {
@@ -45,7 +41,16 @@ public class FileHandler {
 
 		PBEConfiguration pbe = new PBEConfiguration();
 		pbe.setAlgorithm(hashmap.get("PBE"));
-		pbe.setSalt(hashmap.get("SALT"));
+		//we need to read the hexadecimal values from the String and for that is more easy to remove "0x"
+		String salt = hashmap.get("SALT");
+		String[] parseSalt = salt.split(" ");
+		String finalSaltHex = "";
+		
+		for(int i = 0; i < parseSalt.length; i++){
+			finalSaltHex += parseSalt[i].substring(2);
+		}
+		pbe.setSalt(Utils.toByteArray(finalSaltHex));
+		
 		pbe.setCounter(Integer.parseInt(hashmap.get("CTR")));
 
 		return pbe;
@@ -62,7 +67,7 @@ public class FileHandler {
 		try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
 			// simple way to parse, this way is more generic
 			HashMap<String, String> hm = new HashMap<String, String>();
-
+			
 			String line = br.readLine();
 			while (line != null) {
 				// if has # it's a comment, so ignore it

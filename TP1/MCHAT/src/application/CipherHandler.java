@@ -171,8 +171,9 @@ public class CipherHandler {
 	 */
 	public static CipherOutputStream cipherFileWithPBE(String password, PBEConfiguration pbe,
 			CipherConfiguration cipherConfiguration, OutputStream outStream)
+			
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
-			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
+				InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
 		// before putting the password here, we should hash it, also
 		// authenticate with the hash.
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
@@ -184,7 +185,7 @@ public class CipherHandler {
 		SecretKey key = keyFactory.generateSecret(keySpec);
 
 		// The params salt and counter are added to the PBE
-		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
+		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt(), pbe.getCounter());
 
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
@@ -232,7 +233,7 @@ public class CipherHandler {
 		SecretKey key = keyFactory.generateSecret(keySpec);
 
 		// The params salt and counter are added to the PBE
-		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
+		PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt(), pbe.getCounter());
 
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);

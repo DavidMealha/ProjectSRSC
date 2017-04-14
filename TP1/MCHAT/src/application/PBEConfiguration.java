@@ -1,16 +1,21 @@
 package application;
 
-//aux class to handle the pbe config file
+/**
+ * aux class to handle the pbe config file
+ * 
+ * @authors David, Ricardo 
+ *
+ */
 public class PBEConfiguration {
 
 	private String algorithm;
-	private String salt;
+	private byte[] salt;
 	private int counter;
 
 	public PBEConfiguration() {
 	}
 
-	public PBEConfiguration(String algorithm, String salt, int counter) {
+	public PBEConfiguration(String algorithm, byte[] salt, int counter) {
 		super();
 		this.algorithm = algorithm;
 		this.salt = salt;
@@ -25,11 +30,11 @@ public class PBEConfiguration {
 		this.algorithm = algorithm;
 	}
 
-	public String getSalt() {
+	public byte[] getSalt() {
 		return salt;
 	}
 
-	public void setSalt(String salt) {
+	public void setSalt(byte[] salt) {
 		this.salt = salt;
 	}
 

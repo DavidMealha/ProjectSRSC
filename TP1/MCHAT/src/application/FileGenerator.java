@@ -1,10 +1,9 @@
-package filegenerator;
+package application;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -21,7 +20,6 @@ import application.CipherConfiguration;
 import application.CipherHandler;
 import application.PBEConfiguration;
 import application.Utils;
-import application.UtilsBase;
 
 /**
  * Class to generate the .pbe and .crypto files.
@@ -30,27 +28,6 @@ import application.UtilsBase;
  *
  */
 public class FileGenerator {
-
-	public static void main(String[] args)
-			throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException,
-			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
-			NoSuchProviderException, ClassNotFoundException {
-		// create PBEConfiguration to ease the exchange of values between
-		// methods
-		PBEConfiguration pbe = new PBEConfiguration();
-//		pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
-		pbe.setAlgorithm("PBEWithSHAAnd3KeyTripleDES");
-		pbe.setSalt(UtilsBase.toHex(KeyGenerator.generateSalt(8)));
-		pbe.setCounter(1024);
-
-		// how to generate the counter?
-		createPBE("configs/224.9.9.9.pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
-
-		createCrypto("configs/224.9.9.9.crypto", pbe, "password", "AES/CBC/PKCS5Padding", 256, "DES", 64);
-
-		CipherHandler.uncipherFileWithPBE("password", "224.9.9.9").toString();
-
-	}
 
 	/**
 	 * Method to store into a file the configuration for the PBEncryption

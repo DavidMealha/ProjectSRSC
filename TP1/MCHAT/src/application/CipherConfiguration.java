@@ -2,7 +2,14 @@ package application;
 
 import java.io.Serializable;
 
+/**
+ * 
+ * @authors David 
+ *
+ */
+
 public class CipherConfiguration implements Serializable {
+	
 	private String ciphersuite;
 	private int keySize;
 	private String keyValue;

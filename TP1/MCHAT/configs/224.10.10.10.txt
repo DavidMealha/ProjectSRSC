@@ -1,0 +1,7 @@
+# Definição da ciphersuite, chaves e parâmetros
+CIPHERSUITE: AES/CTR/NoPadding # ex., AES/CBC/PKCS#5
+KEYSIZE: 128 # n. de bits da chave, ex: 256
+KEYVALUE: 7c786747503f39565b42792a78 # chave, representada em hexadecimal
+MAC: <mac-alg> # algoritmo MAC (HMAC ou CMAC), por ex: RC6-GMAC
+MACKEYSIZE: <valor> # n. de bits da chave do MAC, ex: 256
+MACKEYVALUE: <valor> # chave MAC, representada em hexadecimal
