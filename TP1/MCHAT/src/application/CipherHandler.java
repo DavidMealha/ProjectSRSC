@@ -113,7 +113,7 @@ public class CipherHandler {
 	 * @throws InvalidAlgorithmParameterException
 	 * @throws ShortBufferException 
 	 */
-	public static byte[] uncipherText(byte[] buffer, int length, CipherConfiguration cipherConfiguration)
+	public static byte[] uncipherText(byte[] buffer, CipherConfiguration cipherConfiguration)
 			throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException,
 			NoSuchProviderException, NoSuchPaddingException, UnsupportedEncodingException,
 			InvalidAlgorithmParameterException, ShortBufferException {
@@ -140,7 +140,7 @@ public class CipherHandler {
 
 		cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 		
-		int ctLength = length;
+		int ctLength = buffer.length;
 		byte[] plainText = cipher.doFinal(buffer, 0, ctLength);
 			
 		int messageLength = plainText.length - mac.getMacLength();

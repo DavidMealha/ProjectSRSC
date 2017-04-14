@@ -91,7 +91,7 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		System.arraycopy(dgPacket.getData(), dgPacket.getOffset(), buffer, 0, dgPacket.getLength());
 				
 		try {
-			buffer = CipherHandler.uncipherText(buffer, dgPacket.getLength(), this.cipherConfiguration);
+			buffer = CipherHandler.uncipherText(buffer, this.cipherConfiguration);
 		} catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException
 			| InvalidAlgorithmParameterException | ShortBufferException | IllegalBlockSizeException
 			| BadPaddingException | IllegalStateException e) {
