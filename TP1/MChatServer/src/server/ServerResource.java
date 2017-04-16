@@ -1,26 +1,30 @@
 package server;
 
+import java.util.HashMap;
+
 import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path("/server")
+import fileManagement.ServerFileHandler;
+import structClasses.RoomPermissions;
+
+@Path("/MChatServer")
 public class ServerResource {
 
-	String value = "default";
+	private HashMap<String, String> users = ServerFileHandler.getUserFromFile();
+	private RoomPermissions rp = ServerFileHandler.getRoomPermissions();
 	
 	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public String get() {
+	@Path("/getPermitions")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public String get(String userName, byte[] message) {
+		
+		String userAshPass = users.get(key)
+		byte[] de
+		
+		
 		return value;
 	}
-
-	@PUT
-	@Produces(MediaType.APPLICATION_JSON)
-	public void set( String val) {
-		value = val;
-	}
-
 }

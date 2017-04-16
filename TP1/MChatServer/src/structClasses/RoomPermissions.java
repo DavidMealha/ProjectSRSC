@@ -22,4 +22,16 @@ public class RoomPermissions {
 	public ArrayList<String> getRoomPerm(String roomName){
 		return permData.get(roomName);
 	}
+	
+	public boolean isAllowed(String roomName, String user){
+		
+		ArrayList<String> authUsers = permData.get(roomName);
+		if(authUsers == null)
+			return false;
+		
+		if(authUsers.contains(user))
+			return true;
+		else
+			return false;
+	}
 }
