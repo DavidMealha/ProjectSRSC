@@ -1,4 +1,4 @@
-package fileManagement;
+package filegenerator;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -17,12 +17,11 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import auxiliaryClasses.Utils;
-import auxiliaryClasses.UtilsBase;
-import security.CipherConfiguration;
-import security.CipherHandler;
-import security.PBEConfiguration;
-
+import application.CipherConfiguration;
+import application.CipherHandler;
+import application.PBEConfiguration;
+import application.Utils;
+import application.UtilsBase;
 
 /**
  * Class to generate the .pbe and .crypto files.
