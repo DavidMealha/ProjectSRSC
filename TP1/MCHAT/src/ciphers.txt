@@ -22,6 +22,7 @@ Algoritmos de hashing existentes:
 
 
 Possible combinations:
+https://bouncycastle.org/specifications.html
 
 Ciphersuite:
 -AES/CTR/NoPadding
@@ -31,10 +32,14 @@ Ciphersuite:
 -DES/ECB/NoPadding
 -DES/CTR/PKCS5Padding
 
-
-Mac:
--DES
+HMac:
 -HMacSHA1
 
-Digest/Hash(MessageDigest   hash = MessageDigest.getInstance("SHA1", "BC"):
+CMAC:
+-DES
+-AES
+
+Digest/Hash:
 -SHA1
+-SHA256
+-MD5

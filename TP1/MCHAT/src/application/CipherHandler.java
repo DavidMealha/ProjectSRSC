@@ -61,11 +61,10 @@ public class CipherHandler {
 			InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException,
 			IllegalStateException {
 		// check if it's ecb, and then add no IV? or just assume it will use
-		// safe modes, like CBC or CTR
 		//when it's ECB or CBC the buffer size should be multiple of the block size.
+		String algorithmMode = cipherConfiguration.getCiphersuite().split("/")[1];
 
-		// generate an initialization vector, with a counter
-		// IvParameterSpec ivSpec = Utils.createCtrIvForAES(1, random);
+		// generate an initialization vector
 		byte[] ivBytes = new byte[] { 0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x08, 0x06, 0x05, 0x04, 0x03,
 				0x02, 0x01, 0x00 };
 
@@ -82,8 +81,14 @@ public class CipherHandler {
 		// generate the mac key
 		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()), cipherConfiguration.getMacAlgorithm());
 
-		// initialize encryption mode
-		cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+		//if it's CBC or CTR
+		if (!algorithmMode.equals("ECB")) {
+			// initialize encryption mode
+			cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+		} else {
+			// initialize encryption mode
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+		}
 
 		// creates byte array with the size of the ciphered text and mac
 		byte[] cipherText = new byte[cipher.getOutputSize(buffer.length + mac.getMacLength())];
@@ -117,7 +122,9 @@ public class CipherHandler {
 			throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException,
 			NoSuchProviderException, NoSuchPaddingException, UnsupportedEncodingException,
 			InvalidAlgorithmParameterException, ShortBufferException {
-
+		
+		String algorithmMode = cipherConfiguration.getCiphersuite().split("/")[1];
+		
 		byte[] ivBytes = new byte[] { 0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x08, 0x06, 0x05, 0x04, 0x03,
 				0x02, 0x01, 0x00 };
 
@@ -135,10 +142,12 @@ public class CipherHandler {
 		// generate the mac key
 		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()), cipherConfiguration.getMacAlgorithm());
 
-		// generate byte array for the key MAC
-		byte[] macKeyBytes = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
-
-		cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+		//if it's CBC or CTR
+		if (!algorithmMode.equals("ECB")) {
+			cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+		} else {
+			cipher.init(Cipher.DECRYPT_MODE, key);
+		}
 		
 		int ctLength = buffer.length;
 		byte[] plainText = cipher.doFinal(buffer, 0, ctLength);
