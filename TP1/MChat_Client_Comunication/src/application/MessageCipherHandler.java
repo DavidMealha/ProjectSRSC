@@ -76,7 +76,7 @@ public class MessageCipherHandler {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static String[] uncipherMessageWithPBE(String ashPassword, byte[] message, PBEConfiguration pbe)
+	public static byte[] uncipherMessageWithPBE(String ashPassword, byte[] message, PBEConfiguration pbe)
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
 			ClassNotFoundException {
@@ -96,8 +96,6 @@ public class MessageCipherHandler {
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 
-        String uncipherMessage  = Utils.toHex(cipher.doFinal(message));
-
-        return uncipherMessage.split(" ");
+        return cipher.doFinal(message);
 	}
 }

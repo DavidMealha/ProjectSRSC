@@ -1,40 +1,21 @@
 package security;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
 
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
-import javax.crypto.ShortBufferException;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
-import auxiliaryClasses.Utils;
-import auxiliaryClasses.UtilsBase;
-import fileManagement.FileHandler;
 
 /**
  * class para encriptar e desencriptar os byte arrays que serão enviados e
@@ -95,7 +76,7 @@ public class MessageCipherHandler {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static String[] uncipherMessageWithPBE(String ashPassword, byte[] message, PBEConfiguration pbe)
+	public static byte[] uncipherMessageWithPBE(String ashPassword, byte[] message, PBEConfiguration pbe)
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
 			ClassNotFoundException {
@@ -115,8 +96,6 @@ public class MessageCipherHandler {
 		Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 
-        String uncipherMessage  = Utils.toHex(cipher.doFinal(message));
-
-        return uncipherMessage.split(" ");
+        return cipher.doFinal(message);
 	}
 }

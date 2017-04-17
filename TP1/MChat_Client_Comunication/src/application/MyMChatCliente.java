@@ -1,6 +1,8 @@
 package application;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -10,16 +12,19 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.swing.JOptionPane;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -39,17 +44,25 @@ public class MyMChatCliente extends MChatCliente {
 		super();
 	}
 
-	private static void authenticateUser(String username, String password, String roomName, PBEConfiguration pbe)
+	private static byte[] authenticateUser(String username, String password, String roomName, PBEConfiguration pbe)
 			throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException,
 			InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException {
+			IllegalBlockSizeException, BadPaddingException, ClassNotFoundException {
 
 		// hash password
 		String hashedPassword = DigestHandler.hashPassword(password);
+		byte[] hashedPasswordByte = Utils.toByteArray(hashedPassword);
+		int sendedNonce = SecureRandom.getInstanceStrong().nextInt();
+		IvParameterSpec generatedNonce = Utils.createCtrIvForAES(sendedNonce, new SecureRandom());
 
-		// only nonce and password go encrypted
-		String message = pbe.getCounter() + " " + hashedPassword;
-		byte[] messageByte = MessageCipherHandler.cipherMessageWithPBE(hashedPassword, pbe, Utils.toByteArray(message));
+		//Concatenate the bytes of nonce and ash pass and only nonce and password go encrypted
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+		outputStream.write( generatedNonce.getIV() );
+		outputStream.write( hashedPasswordByte );
+		
+		byte messageByte[] = outputStream.toByteArray( );
+
+		byte[] messageByteCipher = MessageCipherHandler.cipherMessageWithPBE(hashedPassword, pbe, messageByte);
 
 		String hostname = "localhost:9090";
 		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier()).build();
@@ -60,10 +73,31 @@ public class MyMChatCliente extends MChatCliente {
 		// if password don't match it will receive error message
 		Response encriptedRes = target.path("Authentication/" + username + "/" + roomName).request()
 				.accept(MediaType.APPLICATION_OCTET_STREAM)
-				.post(Entity.entity(messageByte, MediaType.APPLICATION_OCTET_STREAM));
+				.post(Entity.entity(messageByteCipher, MediaType.APPLICATION_OCTET_STREAM));
 
 		// Não tenho a certeza
 		byte[] encriptedFileCrypto = encriptedRes.readEntity(byte[].class);
+		
+		byte[] decriptedBytes = MessageCipherHandler.uncipherMessageWithPBE(hashedPassword, encriptedFileCrypto, pbe);
+		
+		ByteArrayInputStream inputStream = new ByteArrayInputStream( decriptedBytes );
+		
+		//get the iv bytes
+		byte[] ivNumberBytes = new byte[4];
+		inputStream.read(ivNumberBytes,0,4);
+		byte[] ivParamenters = new byte[12];
+		inputStream.read(ivParamenters, 0, 12);
+		
+		ByteBuffer numBuffer = ByteBuffer.wrap(ivNumberBytes);
+		int newNonce = numBuffer.getInt();
+		
+		if(sendedNonce + 1 != newNonce)
+			System.out.println("Message replying");
+		
+		byte[] decriptedCrypto = new byte[inputStream.available()];
+		inputStream.read(decriptedCrypto, 0, inputStream.available());
+		
+		return decriptedCrypto;
 	}
 
 	// Command-line invocation expecting three arguments
