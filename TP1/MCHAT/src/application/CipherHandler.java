@@ -10,6 +10,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
@@ -168,9 +169,10 @@ public class CipherHandler {
 		mac.init(macKey);
 		mac.update(plainText, 0, messageLength);
 
-		byte[] messageHash = new byte[mac.getMacLength()];
-		System.arraycopy(plainText, messageLength, messageHash, 0, messageHash.length);
+		byte[] messageMac = new byte[mac.getMacLength()];
+		System.arraycopy(plainText, messageLength, messageMac, 0, messageMac.length);
 
+		System.out.println(MessageDigest.isEqual(mac.doFinal(), messageMac));
 		return plainText;
 	}
 
