@@ -20,5 +20,10 @@
 ## Fase 2 (Folder MChatServer & MChat_Client_Communication)
 
 ### How to setup:
+* To run the client use the class MyMChatCliente.java.
+* First it shows a popup to insert the password, and then the chat if the credentials are correct.
+* To run the REST server use the class RestServer.java.
+
+### Observations:
 * Communication Client-Server not working due to invalid SSL certificates
 * Messages between client-server with pbe encrypton is implemented but not tested, because the error mentioned above.
