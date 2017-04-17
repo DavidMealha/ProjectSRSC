@@ -172,7 +172,7 @@ public class CipherHandler {
 		byte[] messageMac = new byte[mac.getMacLength()];
 		System.arraycopy(plainText, messageLength, messageMac, 0, messageMac.length);
 
-		System.out.println(MessageDigest.isEqual(mac.doFinal(), messageMac));
+		System.out.println("Mac content verification: " + MessageDigest.isEqual(mac.doFinal(), messageMac));
 		return plainText;
 	}
 

@@ -34,36 +34,38 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 public class MyMChatCliente extends MChatCliente {
-	
-	public MyMChatCliente() { super(); }
-	
-	private static void authenticateUser(String username, String password, String roomName, PBEConfiguration pbe) 
-			throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 
-		//hash password
+	public MyMChatCliente() {
+		super();
+	}
+
+	private static void authenticateUser(String username, String password, String roomName, PBEConfiguration pbe)
+			throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException,
+			InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException,
+			IllegalBlockSizeException, BadPaddingException {
+
+		// hash password
 		String hashedPassword = DigestHandler.hashPassword(password);
-		
-		String message = pbe.getCounter() + " " + hashedPassword; // only nonce and password go encrypted
+
+		// only nonce and password go encrypted
+		String message = pbe.getCounter() + " " + hashedPassword;
 		byte[] messageByte = MessageCipherHandler.cipherMessageWithPBE(hashedPassword, pbe, Utils.toByteArray(message));
-		
+
 		String hostname = "localhost:9090";
-		Client client = ClientBuilder.newBuilder()
-				.hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
+		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier()).build();
 
 		URI baseURI = UriBuilder.fromUri("https://" + hostname + "/").build();
 		WebTarget target = client.target(baseURI);
 
 		// if password don't match it will receive error message
-		Response encriptedRes = target.path("/MChatServer/"+ username + "/"+ roomName)
-				.request()
+		Response encriptedRes = target.path("Authentication/" + username + "/" + roomName).request()
 				.accept(MediaType.APPLICATION_OCTET_STREAM)
 				.post(Entity.entity(messageByte, MediaType.APPLICATION_OCTET_STREAM));
-		
+
 		// Não tenho a certeza
 		byte[] encriptedFileCrypto = encriptedRes.readEntity(byte[].class);
 	}
-	
+
 	// Command-line invocation expecting three arguments
 	public static void main(String[] args) {
 		if ((args.length != 3) && (args.length != 4)) {
@@ -111,19 +113,19 @@ public class MyMChatCliente extends MChatCliente {
 			frame.setVisible(true);
 
 			frame.join(username, group, port, ttl);
-			
-			String password = JOptionPane.showInputDialog(frame,
-	                "What is your password?", null);
-			
-			//call the above method to send the request to the server
-			authenticateUser(username, password, group.getHostAddress(), FileHandler.readPBEncryptionFile("configs/" + group.getHostAddress() + ".pbe" ));
-			
+
+			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
+
+			// call the above method to send the request to the server
+			authenticateUser(username, password, group.getHostAddress(),
+					FileHandler.readPBEncryptionFile("configs/" + group.getHostAddress() + ".pbe"));
+
 		} catch (Throwable e) {
 			System.err.println("Erro ao iniciar a frame: " + e.getClass().getName() + ": " + e.getMessage());
 			System.exit(1);
 		}
 	}
-	
+
 	static public class InsecureHostnameVerifier implements HostnameVerifier {
 		@Override
 		public boolean verify(String hostname, SSLSession session) {
