@@ -36,7 +36,7 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * class to encrypt/uncrypt the .crypto and buffer of byte[]
  * 
- * @author David
+ * @author David, Ricardo
  *
  */
 public class CipherHandler {

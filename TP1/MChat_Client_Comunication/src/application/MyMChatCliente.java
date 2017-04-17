@@ -42,7 +42,6 @@ public class MyMChatCliente extends MChatCliente {
 
 		//hash password
 		String hashedPassword = DigestHandler.hashPassword(password);
-		DigestHandler.validatePassword(password);
 		
 		String message = pbe.getCounter() + " " + hashedPassword; // only nonce and password go encrypted
 		byte[] messageByte = MessageCipherHandler.cipherMessageWithPBE(hashedPassword, pbe, Utils.toByteArray(message));

@@ -3,11 +3,10 @@ package application;
 import java.io.Serializable;
 
 /**
- * 
- * @authors David 
+ * Class to give some structure to the content of the .crypto file. 
+ * @authors David, Ricardo
  *
  */
-
 public class CipherConfiguration implements Serializable {
 	
 	private String ciphersuite;

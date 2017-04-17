@@ -10,6 +10,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
@@ -33,19 +34,24 @@ import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * class para encriptar e desencriptar os byte arrays que serão enviados e
- * recebidos nos datagram packets
+ * class to encrypt/uncrypt the .crypto and buffer of byte[]
  * 
- * @author David
+ * @author David, Ricardo
  *
  */
 public class CipherHandler {
 
+	private static final String LOGFILESDIR = "configs/";
+	private static final String PBEEXTENSION = ".pbe";
+	private static final String CRYPTOEXTENSION = ".crypto";
+	
 	/**
 	 * 
-	 * @param buffer
-	 * @param cipherConfiguration
-	 * @return
+	 * @param buffer - byte[] to cipher
+	 * @param cipherConfiguration - object with all the .crypto information
+	 * 
+	 * @return - buffer ciphered with the .crypto ciphersuite
+	 * 
 	 * @throws NoSuchAlgorithmException
 	 * @throws NoSuchProviderException
 	 * @throws NoSuchPaddingException
@@ -60,12 +66,12 @@ public class CipherHandler {
 			throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException,
 			IllegalStateException {
+		
 		// check if it's ecb, and then add no IV? or just assume it will use
-		// safe modes, like CBC or CTR
-		//when it's ECB or CBC the buffer size should be multiple of the block size.
+		// when it's ECB or CBC the buffer size should be multiple of the block size.
+		String algorithmMode = cipherConfiguration.getCiphersuite().split("/")[1];
 
-		// generate an initialization vector, with a counter
-		// IvParameterSpec ivSpec = Utils.createCtrIvForAES(1, random);
+		// generate an initialization vector
 		byte[] ivBytes = new byte[] { 0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x08, 0x06, 0x05, 0x04, 0x03,
 				0x02, 0x01, 0x00 };
 
@@ -82,8 +88,14 @@ public class CipherHandler {
 		// generate the mac key
 		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()), cipherConfiguration.getMacAlgorithm());
 
-		// initialize encryption mode
-		cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+		//if it's CBC or CTR
+		if (!algorithmMode.equals("ECB")) {
+			// initialize encryption mode
+			cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+		} else {
+			// initialize encryption mode
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+		}
 
 		// creates byte array with the size of the ciphered text and mac
 		byte[] cipherText = new byte[cipher.getOutputSize(buffer.length + mac.getMacLength())];
@@ -100,9 +112,12 @@ public class CipherHandler {
 
 	/**
 	 * 
-	 * @param buffer
-	 * @param cipherConfiguration
-	 * @return
+	 * 
+	 * @param buffer - byte[] to uncipher
+	 * @param cipherConfiguration - object with all the .crypto information
+	 * 
+	 * @return - buffer unciphered with the .crypto ciphersuite
+	 * 
 	 * @throws InvalidKeyException
 	 * @throws BadPaddingException
 	 * @throws IllegalBlockSizeException
@@ -118,6 +133,9 @@ public class CipherHandler {
 			NoSuchProviderException, NoSuchPaddingException, UnsupportedEncodingException,
 			InvalidAlgorithmParameterException, ShortBufferException {
 
+		// e.g: CBC, ECB, CTR
+		String algorithmMode = cipherConfiguration.getCiphersuite().split("/")[1];
+		
 		byte[] ivBytes = new byte[] { 0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x08, 0x06, 0x05, 0x04, 0x03,
 				0x02, 0x01, 0x00 };
 
@@ -135,10 +153,12 @@ public class CipherHandler {
 		// generate the mac key
 		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()), cipherConfiguration.getMacAlgorithm());
 
-		// generate byte array for the key MAC
-		byte[] macKeyBytes = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
-
-		cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+		//if it's CBC or CTR
+		if (!algorithmMode.equals("ECB")) {
+			cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+		} else {
+			cipher.init(Cipher.DECRYPT_MODE, key);
+		}
 		
 		int ctLength = buffer.length;
 		byte[] plainText = cipher.doFinal(buffer, 0, ctLength);
@@ -149,9 +169,10 @@ public class CipherHandler {
 		mac.init(macKey);
 		mac.update(plainText, 0, messageLength);
 
-		byte[] messageHash = new byte[mac.getMacLength()];
-		System.arraycopy(plainText, messageLength, messageHash, 0, messageHash.length);
+		byte[] messageMac = new byte[mac.getMacLength()];
+		System.arraycopy(plainText, messageLength, messageMac, 0, messageMac.length);
 
+		System.out.println(MessageDigest.isEqual(mac.doFinal(), messageMac));
 		return plainText;
 	}
 
@@ -219,9 +240,9 @@ public class CipherHandler {
 			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
 			ClassNotFoundException {
 		// read the ciphered file, that is saved as a ciphered object in a whole
-		InputStream iStream = FileHandler.readCiphersuiteFileEncrypted("configs/" + multicastAddress + ".crypto");
+		InputStream iStream = FileHandler.readCiphersuiteFileEncrypted(LOGFILESDIR + multicastAddress + CRYPTOEXTENSION);
 
-		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("configs/" + multicastAddress + ".pbe");
+		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(LOGFILESDIR + multicastAddress + PBEEXTENSION);
 
 		// Create PBEKeySpec for the password given
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
