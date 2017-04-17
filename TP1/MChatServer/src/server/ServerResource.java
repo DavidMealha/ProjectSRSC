@@ -35,34 +35,45 @@ public class ServerResource {
 
 	private HashMap<String, String> users = ServerFileHandler.getUserFromFile();
 	private RoomPermissions rp = ServerFileHandler.getRoomPermissions();
+
+	private static final String LOGFILESDIR = "configs/";
+	private static final String PBEEXTENSION = ".pbe";
+	private static final String CRYPTOEXTENSION = ".crypto";
 	
 	@POST
 	@Path("/{userName}/{roomName}")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response get(@PathParam("userName")String userName, @PathParam("roomName")String roomName, byte[] message) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException, ClassNotFoundException {
-		
+	public Response get(@PathParam("userName") String userName, @PathParam("roomName") String roomName, byte[] message)
+			throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException,
+			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
+			ClassNotFoundException {
+
 		System.out.println("Received request!");
 		String userHashedPassword = users.get(userName);
-		String pbeFileName = roomName +"_"+ userName; // pbe file need to have room + userName
-		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("configs/" + pbeFileName + ".pbe");
 		
+		// pbe file need to have room + userName
+		String pbeFileName = roomName + "_" + userName;
+		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(LOGFILESDIR + pbeFileName + PBEEXTENSION);
+
 		// decipher to obtain the remaining parameters
 		String[] decipheredPayload = MessageCipherHandler.uncipherMessageWithPBE(userHashedPassword, message, pbe);
-		
-		// Nounce is still not used. It is required to update the nonce inside .pbe file??
+
+		// Nounce is still not used. It is required to update the nonce inside
+		// .pbe file??
 		int nonce = Integer.parseInt(decipheredPayload[0]);
 		String insideCipherAshPass = decipheredPayload[1];
-		
-		if(!userHashedPassword.equals(insideCipherAshPass))
+
+		if (!userHashedPassword.equals(insideCipherAshPass))
 			return Response.status(Status.FORBIDDEN).build();
-		
-		//Know the password is verified we need to fetch a raw criptoFile and cipher with user password, its only geting a raw crypto file
-		InputStream cryptoInputStream = new FileInputStream(new File("configs/" +roomName +".txt"));
+
+		// Know the password is verified we need to fetch a raw criptoFile and
+		// cipher with user password, its only geting a raw crypto file
+		InputStream cryptoInputStream = new FileInputStream(new File(LOGFILESDIR + roomName + ".txt"));
 		byte[] messageFile = new byte[cryptoInputStream.available()];
-		cryptoInputStream.read(messageFile, 0 , cryptoInputStream.available());
-		
-		byte[] cipheredMessageFile = MessageCipherHandler.cipherMessageWithPBE(userHashedPassword, pbe, messageFile);	
-		
+		cryptoInputStream.read(messageFile, 0, cryptoInputStream.available());
+
+		byte[] cipheredMessageFile = MessageCipherHandler.cipherMessageWithPBE(userHashedPassword, pbe, messageFile);
+
 		return Response.ok(cipheredMessageFile).build();
 	}
 }
