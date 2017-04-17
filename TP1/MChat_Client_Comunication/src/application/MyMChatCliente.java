@@ -15,9 +15,12 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.swing.JOptionPane;
@@ -26,10 +29,13 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -44,10 +50,29 @@ public class MyMChatCliente extends MChatCliente {
 		super();
 	}
 
+	/**
+	 * 
+	 * @param username
+	 * @param password
+	 * @param roomName
+	 * @param pbe
+	 * @return
+	 * @throws IOException
+	 * @throws NoSuchAlgorithmException
+	 * @throws NoSuchProviderException
+	 * @throws InvalidKeyException
+	 * @throws InvalidKeySpecException
+	 * @throws NoSuchPaddingException
+	 * @throws InvalidAlgorithmParameterException
+	 * @throws IllegalBlockSizeException
+	 * @throws BadPaddingException
+	 * @throws ClassNotFoundException
+	 * @throws KeyManagementException 
+	 */
 	private static byte[] authenticateUser(String username, String password, String roomName, PBEConfiguration pbe)
 			throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException,
 			InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException, ClassNotFoundException {
+			IllegalBlockSizeException, BadPaddingException, ClassNotFoundException, KeyManagementException {
 
 		// hash password
 		String hashedPassword = DigestHandler.hashPassword(password);
@@ -64,12 +89,19 @@ public class MyMChatCliente extends MChatCliente {
 
 		byte[] messageByteCipher = MessageCipherHandler.cipherMessageWithPBE(hashedPassword, pbe, messageByte);
 
+		// configure the SSLContext with a TrustManager
+        SSLContext ctx = SSLContext.getInstance("TLS");
+        ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
+        SSLContext.setDefault(ctx);
+        
 		String hostname = "localhost:9090";
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier()).build();
+		Client client = ClientBuilder.newBuilder()
+									 .hostnameVerifier(new InsecureHostnameVerifier())
+									 .build();
 
 		URI baseURI = UriBuilder.fromUri("https://" + hostname + "/").build();
 		WebTarget target = client.target(baseURI);
-
+		
 		// if password don't match it will receive error message
 		Response encriptedRes = target.path("Authentication/" + username + "/" + roomName).request()
 				.accept(MediaType.APPLICATION_OCTET_STREAM)
@@ -100,7 +132,10 @@ public class MyMChatCliente extends MChatCliente {
 		return decriptedCrypto;
 	}
 
-	// Command-line invocation expecting three arguments
+	/**
+	 * Command-line invocation expecting three argument
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		if ((args.length != 3) && (args.length != 4)) {
 			System.err.println("Utilizar: MyMChatCliente " + "<nickusername> <grupo IPMulticast> <porto> { <ttl> }");
@@ -166,4 +201,18 @@ public class MyMChatCliente extends MChatCliente {
 			return true;
 		}
 	}
+	
+	private static class DefaultTrustManager implements X509TrustManager {
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
+    }
 }
