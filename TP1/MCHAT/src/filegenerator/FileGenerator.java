@@ -32,6 +32,8 @@ import application.UtilsBase;
 public class FileGenerator {
 
 	private static final String LOGFILESDIR = "configs/";
+	private static final String PBEEXTENSION = ".pbe";
+	private static final String CRYPTOEXTENSION = ".crypto";
 	
 	public static void main(String[] args)
 			throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException,
@@ -60,11 +62,11 @@ public class FileGenerator {
 			pbe.setSalt(UtilsBase.toHex(KeyGenerator.generateSalt(PBESaltSize)));
 			pbe.setCounter(PBECounter);
 		
-			createPBE(LOGFILESDIR + filename + ".pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
+			createPBE(LOGFILESDIR + filename + PBEEXTENSION, pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
+			createCrypto(LOGFILESDIR + filename + CRYPTOEXTENSION, pbe, password, CiphersuiteAlgorithm, CiphersuiteKeySize, MacAlgorithm, MacKeySize);
 			
-			createCrypto(LOGFILESDIR + filename + "crypto", pbe, password, CiphersuiteAlgorithm, CiphersuiteKeySize, MacAlgorithm, MacKeySize);
-			
-			//CipherHandler.uncipherFileWithPBE(password, filename).toString();
+			// just to test if unciphers correctly
+			// CipherHandler.uncipherFileWithPBE(password, filename).toString();
 		}
 	}
 
@@ -94,6 +96,27 @@ public class FileGenerator {
 		}
 	}
 
+	/**
+	 * method to generate the .crypto file with the content encrypted with PBE.
+	 * 
+	 * @param filename
+	 * @param pbe
+	 * @param password
+	 * @param algorithm
+	 * @param keySize
+	 * @param macAlgorithm
+	 * @param macKeySize
+	 * 
+	 * @throws InvalidKeyException
+	 * @throws NoSuchAlgorithmException
+	 * @throws InvalidKeySpecException
+	 * @throws NoSuchPaddingException
+	 * @throws InvalidAlgorithmParameterException
+	 * @throws IllegalBlockSizeException
+	 * @throws BadPaddingException
+	 * @throws IOException
+	 * @throws NoSuchProviderException
+	 */
 	public static void createCrypto(String filename, PBEConfiguration pbe, String password, String algorithm,
 			int keySize, String macAlgorithm, int macKeySize) throws InvalidKeyException, NoSuchAlgorithmException,
 			InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException,

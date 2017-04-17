@@ -17,11 +17,4 @@ public class KeyGenerator {
 		SecureRandom.getInstanceStrong().nextBytes(salt);
 		return salt;
 	}
-
-	public void generateCiphersuite(String password) {
-		// the password needs to firstly be hashed, in order to later be
-		// compared with the hash of the pwd in the server
-
-	}
-
 }

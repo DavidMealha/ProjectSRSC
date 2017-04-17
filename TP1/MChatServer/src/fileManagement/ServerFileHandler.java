@@ -11,7 +11,7 @@ import structClasses.RoomPermissions;
 public class ServerFileHandler {
 	
 	private static final String USERFILENAME = "dbLogs/users.txt";
-	private static final String USERPERMFILENAME = "dbLogs/permition.txt";
+	private static final String USERPERMFILENAME = "dbLogs/permissions.txt";
 
 	
 	public static RoomPermissions getRoomPermissions() {

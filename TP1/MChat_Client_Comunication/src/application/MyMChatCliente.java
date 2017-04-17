@@ -117,7 +117,7 @@ public class MyMChatCliente extends MChatCliente {
 	                "What is your password?", null);
 			
 			//call the above method to send the request to the server
-			authenticateUser(username, password);
+			authenticateUser(username, password, group.getHostAddress(), FileHandler.readPBEncryptionFile("configs/" + group.getHostAddress() + ".pbe" ));
 			
 		} catch (Throwable e) {
 			System.err.println("Erro ao iniciar a frame: " + e.getClass().getName() + ": " + e.getMessage());

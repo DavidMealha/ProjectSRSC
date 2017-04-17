@@ -33,19 +33,24 @@ import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * class para encriptar e desencriptar os byte arrays que serão enviados e
- * recebidos nos datagram packets
+ * class to encrypt/uncrypt the .crypto and buffer of byte[]
  * 
  * @author David
  *
  */
 public class CipherHandler {
 
+	private static final String LOGFILESDIR = "configs/";
+	private static final String PBEEXTENSION = ".pbe";
+	private static final String CRYPTOEXTENSION = ".crypto";
+	
 	/**
 	 * 
-	 * @param buffer
-	 * @param cipherConfiguration
-	 * @return
+	 * @param buffer - byte[] to cipher
+	 * @param cipherConfiguration - object with all the .crypto information
+	 * 
+	 * @return - buffer ciphered with the .crypto ciphersuite
+	 * 
 	 * @throws NoSuchAlgorithmException
 	 * @throws NoSuchProviderException
 	 * @throws NoSuchPaddingException
@@ -60,8 +65,9 @@ public class CipherHandler {
 			throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException,
 			IllegalStateException {
+		
 		// check if it's ecb, and then add no IV? or just assume it will use
-		//when it's ECB or CBC the buffer size should be multiple of the block size.
+		// when it's ECB or CBC the buffer size should be multiple of the block size.
 		String algorithmMode = cipherConfiguration.getCiphersuite().split("/")[1];
 
 		// generate an initialization vector
@@ -105,9 +111,12 @@ public class CipherHandler {
 
 	/**
 	 * 
-	 * @param buffer
-	 * @param cipherConfiguration
-	 * @return
+	 * 
+	 * @param buffer - byte[] to uncipher
+	 * @param cipherConfiguration - object with all the .crypto information
+	 * 
+	 * @return - buffer unciphered with the .crypto ciphersuite
+	 * 
 	 * @throws InvalidKeyException
 	 * @throws BadPaddingException
 	 * @throws IllegalBlockSizeException
@@ -123,6 +132,7 @@ public class CipherHandler {
 			NoSuchProviderException, NoSuchPaddingException, UnsupportedEncodingException,
 			InvalidAlgorithmParameterException, ShortBufferException {
 		
+		// e.g: CBC, ECB, CTR
 		String algorithmMode = cipherConfiguration.getCiphersuite().split("/")[1];
 		
 		byte[] ivBytes = new byte[] { 0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x08, 0x06, 0x05, 0x04, 0x03,
@@ -180,9 +190,9 @@ public class CipherHandler {
 	 */
 	public static CipherOutputStream cipherFileWithPBE(String password, PBEConfiguration pbe,
 			CipherConfiguration cipherConfiguration, OutputStream outStream)
-			
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
 				InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
+		
 		// before putting the password here, we should hash it, also
 		// authenticate with the hash.
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
@@ -227,10 +237,11 @@ public class CipherHandler {
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
 			ClassNotFoundException {
+		
 		// read the ciphered file, that is saved as a ciphered object in a whole
-		InputStream iStream = FileHandler.readCiphersuiteFileEncrypted("configs/" + multicastAddress + ".crypto");
+		InputStream iStream = FileHandler.readCiphersuiteFileEncrypted(LOGFILESDIR + multicastAddress + CRYPTOEXTENSION);
 
-		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("configs/" + multicastAddress + ".pbe");
+		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(LOGFILESDIR + multicastAddress + PBEEXTENSION);
 
 		// Create PBEKeySpec for the password given
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());

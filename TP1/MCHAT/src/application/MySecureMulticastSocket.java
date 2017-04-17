@@ -26,6 +26,9 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	private CipherConfiguration cipherConfiguration;
 	private PBEConfiguration pbe;
 
+	private static final String LOGFILESDIR = "configs/";
+	private static final String PBEEXTENSION = ".pbe";
+	
 	// https://docs.oracle.com/javase/7/docs/api/java/net/MulticastSocket.html
 	public MySecureMulticastSocket() throws IOException {
 		super();
@@ -38,7 +41,7 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	@Override
 	public void joinGroup(InetAddress group) throws IOException {
 		// get ip of multicast group
-		String pbeFilename = "configs/" + group.getHostAddress() + ".pbe";
+		String pbeFilename = LOGFILESDIR + group.getHostAddress() + PBEEXTENSION;
 
 		// class with all the pbe configuration for the address
 		this.setPbe(FileHandler.readPBEncryptionFile(pbeFilename));
@@ -65,6 +68,7 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		} catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException
 			| InvalidAlgorithmParameterException | ShortBufferException | IllegalBlockSizeException
 			| BadPaddingException | IllegalStateException e1) {
+			
 			System.out.println("Failed to cipher message." + e1.getMessage());
 		}
 		// after encrypting the buffer, it's time to finally set it
@@ -76,7 +80,7 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		} catch (IOException e) {
 			System.out.println(
 					"Falhou o envio do datagram." + "Na classe:" + e.getClass().getName() + " | " + e.getMessage());
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 
@@ -95,6 +99,7 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		} catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException
 			| InvalidAlgorithmParameterException | ShortBufferException | IllegalBlockSizeException
 			| BadPaddingException | IllegalStateException e) {
+			
 			System.out.println("Failed to uncipher message." + e.getMessage());
 		}
 		//set the data of the packet with the unciphered buffer, changing by reference

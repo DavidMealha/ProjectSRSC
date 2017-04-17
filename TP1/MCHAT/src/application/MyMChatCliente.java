@@ -23,7 +23,6 @@ public class MyMChatCliente extends MChatCliente {
 
 		//hash password
 		String hashedPassword = DigestHandler.hashPassword(password);
-		DigestHandler.validatePassword(password);
 
 //		URL url = new URL("http://localhost:9090/authentication");
 //			
@@ -102,11 +101,10 @@ public class MyMChatCliente extends MChatCliente {
 
 			frame.join(username, group, port, ttl);
 			
-			String password = JOptionPane.showInputDialog(frame,
-	                "What is your password?", null);
+			// String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
 			
-			//call the above method to send the request to the server
-			authenticateUser(username, password);
+			// call the REST Server to authenticate the user
+			// authenticateUser(username, password);
 			
 		} catch (Throwable e) {
 			System.err.println("Erro ao iniciar a frame: " + e.getClass().getName() + ": " + e.getMessage());
