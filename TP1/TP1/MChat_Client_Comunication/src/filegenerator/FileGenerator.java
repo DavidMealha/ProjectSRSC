@@ -62,7 +62,7 @@ public class FileGenerator {
 		
 			createPBE(LOGFILESDIR + filename + ".pbe", pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
 			
-			createCrypto(LOGFILESDIR + filename + "crypto", pbe, password, CiphersuiteAlgorithm, CiphersuiteKeySize, MacAlgorithm, MacKeySize);
+			createCrypto(LOGFILESDIR + filename + ".crypto", pbe, password, CiphersuiteAlgorithm, CiphersuiteKeySize, MacAlgorithm, MacKeySize);
 			
 			//CipherHandler.uncipherFileWithPBE(password, filename).toString();
 		}

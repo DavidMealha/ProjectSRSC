@@ -11,9 +11,7 @@ public class AshDigest {
 
 	//only needed here for user file generation
 	public static String ashPassword(String password) throws NoSuchAlgorithmException, NoSuchProviderException{
-	
-
-        MessageDigest   hash = MessageDigest.getInstance("SHA3-224", "BC");        
+		MessageDigest   hash = MessageDigest.getInstance("SHA3-224", "BC");        
         hash.update(Utils.toByteArray(password));
         
         return Utils.toString(hash.digest());

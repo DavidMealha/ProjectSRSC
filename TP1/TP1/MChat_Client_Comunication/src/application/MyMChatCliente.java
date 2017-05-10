@@ -90,7 +90,7 @@ public class MyMChatCliente extends MChatCliente {
 		byte[] messageByteCipher = MessageCipherHandler.cipherMessageWithPBE(hashedPassword, pbe, messageByte);
 
 		// configure the SSLContext with a TrustManager
-        SSLContext ctx = SSLContext.getInstance("TLS");
+        SSLContext ctx = SSLContext.getInstance("TLSv1.2");
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
         
@@ -181,15 +181,16 @@ public class MyMChatCliente extends MChatCliente {
 			frame.setSize(800, 300);
 			frame.setVisible(true);
 
-			frame.join(username, group, port, ttl);
-
 			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
+			
+			frame.join(username, group, port, ttl);
 
 			// call the above method to send the request to the server
 			authenticateUser(username, password, group.getHostAddress(),
 					FileHandler.readPBEncryptionFile("configs/" + group.getHostAddress() + ".pbe"));
 
 		} catch (Throwable e) {
+			e.printStackTrace();
 			System.err.println("Erro ao iniciar a frame: " + e.getClass().getName() + ": " + e.getMessage());
 			System.exit(1);
 		}

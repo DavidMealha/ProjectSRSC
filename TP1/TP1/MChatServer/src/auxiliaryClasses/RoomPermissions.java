@@ -1,4 +1,4 @@
-package structClasses;
+package auxiliaryClasses;
 
 import java.util.ArrayList;
 import java.util.HashMap;

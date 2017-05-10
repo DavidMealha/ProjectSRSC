@@ -28,12 +28,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import auxiliaryClasses.RoomPermissions;
 import auxiliaryClasses.Utils;
 import fileManagement.FileHandler;
 import fileManagement.ServerFileHandler;
 import security.MessageCipherHandler;
 import security.PBEConfiguration;
-import structClasses.RoomPermissions;
 
 @Path("/Authentication")
 public class ServerResource {

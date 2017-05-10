@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import structClasses.RoomPermissions;
+import auxiliaryClasses.RoomPermissions;
 
 public class ServerFileHandler {
 	
