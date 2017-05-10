@@ -44,31 +44,21 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
+import security.InsecureHostnameVerifier;
+import security.InsecureTrustManager;
+
 public class MyMChatCliente extends MChatCliente {
 
+	public static final String baseUri = "https://localhost:9090";
+	private Client client;
+	private WebTarget target;
+	
 	public MyMChatCliente() {
 		super();
+		client = ClientBuilder.newClient();
+        target = client.target(baseUri);
 	}
 
-	/**
-	 * 
-	 * @param username
-	 * @param password
-	 * @param roomName
-	 * @param pbe
-	 * @return
-	 * @throws IOException
-	 * @throws NoSuchAlgorithmException
-	 * @throws NoSuchProviderException
-	 * @throws InvalidKeyException
-	 * @throws InvalidKeySpecException
-	 * @throws NoSuchPaddingException
-	 * @throws InvalidAlgorithmParameterException
-	 * @throws IllegalBlockSizeException
-	 * @throws BadPaddingException
-	 * @throws ClassNotFoundException
-	 * @throws KeyManagementException 
-	 */
 	private static byte[] authenticateUser(String username, String password, String roomName, PBEConfiguration pbe)
 			throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException,
 			InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException,
@@ -91,7 +81,7 @@ public class MyMChatCliente extends MChatCliente {
 
 		// configure the SSLContext with a TrustManager
         SSLContext ctx = SSLContext.getInstance("TLSv1.2");
-        ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
+        ctx.init(new KeyManager[0], new TrustManager[] {new InsecureTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
         
 		String hostname = "localhost:9090";
@@ -195,25 +185,4 @@ public class MyMChatCliente extends MChatCliente {
 			System.exit(1);
 		}
 	}
-
-	static public class InsecureHostnameVerifier implements HostnameVerifier {
-		@Override
-		public boolean verify(String hostname, SSLSession session) {
-			return true;
-		}
-	}
-	
-	private static class DefaultTrustManager implements X509TrustManager {
-
-        @Override
-        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return null;
-        }
-    }
 }
