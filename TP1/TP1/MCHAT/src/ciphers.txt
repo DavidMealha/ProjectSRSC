@@ -1,3 +1,7 @@
+Ciphering garante confidencialidade.
+MAC garante autenticação.
+HMAC garante integridade.
+
 Modos existentes:
 -ECB, não usa Initialization Vector
 -CBC, usa Initialization Vector
@@ -13,8 +17,8 @@ Algoritmos criptrográficos existentes:
 -RC6..
 
 Algoritmos de hashing existentes:
--MD5 (chaves pequenas, 60/56 bits?)
--SHA1 (colisões, chaves pequenas, 90bits?)
+-MD5 
+-SHA1 
 -SHA2
 -SHA3
 -SHA256
