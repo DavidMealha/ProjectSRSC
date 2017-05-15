@@ -17,6 +17,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import com.sun.net.httpserver.HttpServer;
 
+import security.InsecureTrustManager;
+
 public class RestServer {
 
 	public static void main(String[] args) throws Exception {

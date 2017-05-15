@@ -1,6 +1,5 @@
 package server;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -28,10 +27,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import auxiliaryClasses.RoomPermissions;
-import auxiliaryClasses.Utils;
-import fileManagement.FileHandler;
-import fileManagement.ServerFileHandler;
+import security.RoomPermissions;
+import helpers.Utils;
+import helpers.FileHandler;
+import helpers.ServerFileHandler;
 import security.MessageCipherHandler;
 import security.PBEConfiguration;
 

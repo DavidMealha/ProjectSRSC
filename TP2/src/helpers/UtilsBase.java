@@ -1,5 +1,8 @@
 package helpers;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
 /**
  * Classe auxiliar
  */
@@ -62,5 +65,18 @@ public class UtilsBase {
 	                             + Character.digit(s.charAt(i+1), 16));
 	    }
 	    return data;
+	}
+	
+	/**
+	 * Creates a random salt with 64/128/256 bits
+	 * 
+	 * @param nrBytes
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 */
+	public static byte[] generateSalt(int nrBytes) throws NoSuchAlgorithmException {
+		byte[] salt = new byte[nrBytes];
+		SecureRandom.getInstanceStrong().nextBytes(salt);
+		return salt;
 	}
 }

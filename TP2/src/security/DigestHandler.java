@@ -4,6 +4,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
+import helpers.Utils;
+
 /**
  * Class to hash the password inserted by the user.
  * 

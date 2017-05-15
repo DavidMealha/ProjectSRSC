@@ -16,11 +16,11 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import application.CipherConfiguration;
-import application.CipherHandler;
-import application.PBEConfiguration;
-import application.Utils;
-import filegenerator.KeyGenerator;
+import security.CipherConfiguration;
+import security.CipherHandler;
+import security.PBEConfiguration;
+import helpers.Utils;
+import helpers.UtilsBase;
 
 /**
  * Class to generate the .pbe and .crypto files.
@@ -60,7 +60,7 @@ public class FileGenerator {
 			// pbe.setAlgorithm("PBEWITHSHA256AND192BITAES-CBC-BC");
 			// pbe.setAlgorithm("PBEWithSHAAnd3KeyTripleDES");
 			pbe.setAlgorithm(PBEAlgorithm);
-			pbe.setSalt(UtilsBase.toHex(KeyGenerator.generateSalt(PBESaltSize)));
+			pbe.setSalt(UtilsBase.toHex(UtilsBase.generateSalt(PBESaltSize)));
 			pbe.setCounter(PBECounter);
 
 			createPBE(LOGFILESDIR + filename + PBEEXTENSION, pbe.getAlgorithm(), pbe.getCounter(), pbe.getSalt());
