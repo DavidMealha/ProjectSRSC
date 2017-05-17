@@ -1,0 +1,17 @@
+keytool -genkey -keyalg RSA -alias Server -keystore serverRSA.jks -storepass serverRSA -validity 360 -keysize 4096
+
+Dados: Server, Server, Server, Lisbon, Lisbon, PT
+EntryPwd : serverRSA
+KeystorePwd : serverRSA
+
+keytool -export -alias Server -keystore serverRSA.jks -file serverRSA.cer
+
+==================================================================================================
+
+keytool -genkey -keyalg DSA -alias Server -keystore serverDSA.jks -storepass serverDSA -validity 360 -keysize 1024
+
+Dados: Server, Server, Server, Lisbon, Lisbon, PT
+EntryPwd : serverDSA
+KeystorePwd : serverDSA
+
+keytool -export -alias Server -keystore serverDSA.jks -file serverDSA.cer

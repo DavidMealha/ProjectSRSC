@@ -35,9 +35,13 @@ public class TLSServer {
 			sc.init(kmf.getKeyManagers(), null, null);
 			SSLServerSocketFactory ssf = sc.getServerSocketFactory();
 			SSLServerSocket s = (SSLServerSocket) ssf.createServerSocket(port);
+			
+			//s condiciona o fluxo se é inicializado pelo cliente ou o servidor
+			//como o cliente fosse o servidor fosse e assim autentica-se e o servidor
 
 			s.setEnabledProtocols(confprotocols);
 			// s.setEnabledCipherSuites(confciphersuites);
+			//to enable cliente authentication
 			s.setNeedClientAuth(true);
 
 			printServerSocketInfo(s);

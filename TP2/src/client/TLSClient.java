@@ -20,8 +20,10 @@ public class TLSClient {
 			// enable TLSv1.2 and ciphersuites
 			c.setEnabledProtocols(new String[] { "TLSv1.2" });
 			c.setEnabledCipherSuites(new String[] { "TLS_RSA_WITH_AES_256_CBC_SHA256" });
-			printSocketInfo(c);
 
+			printSocketInfo(c);
+			
+			//ter que ter o startHandshake depois da parameterização
 			c.startHandshake();
 			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));
