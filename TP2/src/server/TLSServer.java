@@ -11,46 +11,69 @@ import helpers.TLSConfiguration;
 public class TLSServer {
 
 	private static final String SERVER_TLS_CONFIGURATION = "configs/server.tls.config";
+	private static final String SERVER_PATH = "src/server/";
 
 	public static void main(String[] args) {
-		//read the tls configuration file
-		TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(SERVER_TLS_CONFIGURATION);
-				
-		String ksName = args[0]; // serverkeystore
-		char[] ksPass = args[1].toCharArray(); // password da keystore
-		char[] ctPass = args[2].toCharArray(); // password entry
-		int port = Integer.parseInt(args[3]);
-
-		String[] confciphersuites = { "TLS_RSA_WITH_AES_256_CBC_SHA256" };
-		String[] confprotocols = { "TLSv1.2" };
+		if (args.length != 3) {
+			System.out.println("3 Arguments required: keystorePassword entryPassword port");
+			System.exit(0);
+		}
 
 		try {
-			KeyStore ks = KeyStore.getInstance("JKS");
-			ks.load(new FileInputStream(ksName), ksPass);
+			// read the tls configuration file
+			TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(SERVER_TLS_CONFIGURATION);
 
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-			kmf.init(ks, ctPass);
+			char[] keystorePassword = args[0].toCharArray(); // password da keystore
+			char[] entryPassword = args[1].toCharArray(); // password entry
+			int port = Integer.parseInt(args[2]); //port
 
-			SSLContext sc = SSLContext.getInstance("TLS");
-			sc.init(kmf.getKeyManagers(), null, null);
-			SSLServerSocketFactory ssf = sc.getServerSocketFactory();
-			SSLServerSocket s = (SSLServerSocket) ssf.createServerSocket(port);
+			SSLSocket c = null;
+			SSLServerSocket s = null;
 			
-			//s condiciona o fluxo se é inicializado pelo cliente ou o servidor
-			//como o cliente fosse o servidor fosse e assim autentica-se e o servidor
+			if (tlsConfig.getAuthenticationType().equals("SERVIDOR")
+					|| tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
+				
+				// load server keystore
+				KeyStore ks = KeyStore.getInstance("JKS");
+				ks.load(new FileInputStream(SERVER_PATH + tlsConfig.getPrivateKeyStoreFilename()), keystorePassword);
 
-			s.setEnabledProtocols(confprotocols);
-			// s.setEnabledCipherSuites(confciphersuites);
-			//to enable cliente authentication
-			s.setNeedClientAuth(true);
+				KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+				kmf.init(ks, entryPassword);
 
-			printServerSocketInfo(s);
+				SSLContext sc = SSLContext.getInstance(tlsConfig.getVersion());
+				sc.init(kmf.getKeyManagers(), null, null);
+				SSLServerSocketFactory ssf = sc.getServerSocketFactory();
+				s = (SSLServerSocket) ssf.createServerSocket(port);
 
-			SSLSocket c = (SSLSocket) s.accept();
-			printSocketInfo(c);
+				if (tlsConfig.getAuthenticationType().equals("SERVIDOR")) {
+					s.setNeedClientAuth(false);
+				} else {
+					s.setNeedClientAuth(true);
+				}
+
+				s.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
+				s.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
+
+				printServerSocketInfo(s);
+
+				c = (SSLSocket) s.accept();
+				printSocketInfo(c);
+			} else {
+				// s condiciona o fluxo se é inicializado pelo cliente ou o
+				// servidor
+				// como o cliente fosse o servidor fosse e assim autentica-se e
+				// o servidor
+
+				// SSLServerSocket passa para o cliente, ou simplesmente no
+				// SSLSocket o servidor é que faz o startHandshake?
+			}
+
 			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));
 
+			System.out.println("Entered the server!");
+			
+			
 			// Service from this server ...
 			String m = "Welcome ! Type in some words, I will reverse them.";
 			w.write(m, 0, m.length());
@@ -59,14 +82,20 @@ public class TLSServer {
 			while ((m = r.readLine()) != null) {
 				if (m.equals("."))
 					break;
-				char[] a = m.toCharArray();
-				int n = a.length;
-				for (int i = 0; i < n / 2; i++) {
-					char t = a[i];
-					a[i] = a[n - 1 - i];
-					a[n - i - 1] = t;
-				}
-				w.write(a, 0, n);
+				
+				System.out.println(m);
+				
+//				char[] a = m.toCharArray();
+//				int n = a.length;
+//				for (int i = 0; i < n / 2; i++) {
+//					char t = a[i];
+//					a[i] = a[n - 1 - i];
+//					a[n - i - 1] = t;
+//				}
+				
+				String authResult = "Authentication Failed"; 
+				
+				w.write(authResult.toCharArray(), 0, authResult.length());
 				w.newLine();
 				w.flush();
 			}
@@ -75,7 +104,8 @@ public class TLSServer {
 			c.close();
 			s.close();
 		} catch (Exception e) {
-			System.err.println(e.toString());
+			e.printStackTrace();
+			//System.err.println(e.toString());
 		}
 	}
 
@@ -93,16 +123,11 @@ public class TLSServer {
 	}
 
 	private static void printServerSocketInfo(SSLServerSocket s) {
-		System.out.println("Server socket class: "+s.getClass());
-		System.out.println("   Socker address = "
-			+s.getInetAddress().toString());
-		System.out.println("   Socker port = "
-			+s.getLocalPort());
-		System.out.println("   Need client authentication = "
-			+s.getNeedClientAuth());
-		System.out.println("   Want client authentication = "
-			+s.getWantClientAuth());
-		System.out.println("   Use client mode = "
-			+s.getUseClientMode());
+		System.out.println("Server socket class: " + s.getClass());
+		System.out.println("   Socker address = " + s.getInetAddress().toString());
+		System.out.println("   Socker port = " + s.getLocalPort());
+		System.out.println("   Need client authentication = " + s.getNeedClientAuth());
+		System.out.println("   Want client authentication = " + s.getWantClientAuth());
+		System.out.println("   Use client mode = " + s.getUseClientMode());
 	}
 }
