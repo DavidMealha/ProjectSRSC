@@ -1,55 +1,9 @@
 package client;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-
 import javax.swing.JOptionPane;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-
-import helpers.FileHandler;
-import helpers.Utils;
-import security.AuthenticationService;
-import security.DigestHandler;
-import security.InsecureHostnameVerifier;
-import security.InsecureTrustManager;
-import security.MessageCipherHandler;
-import security.PBEConfiguration;
 
 public class MyMChatCliente extends MChatCliente {
-
-	public static final String baseUri = "https://localhost:9090";
-	private Client client;
-	private WebTarget target;
-	
-	public MyMChatCliente() {
-		super();
-		client = ClientBuilder.newClient();
-        target = client.target(baseUri);
-	}
 
 	/**
 	 * Command-line invocation expecting three argument
@@ -105,7 +59,7 @@ public class MyMChatCliente extends MChatCliente {
 			frame.join(username, group, port, ttl);
 
 			//send the request to the server to authenticate the user
-			AuthenticationService.authenticateUser(username, password, group.getHostAddress());
+			//AuthenticationService.authenticateUser(username, password, group.getHostAddress());
 
 		} catch (Throwable e) {
 			e.printStackTrace();
