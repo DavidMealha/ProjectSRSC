@@ -32,6 +32,7 @@ import javax.ws.rs.core.UriBuilder;
 
 import helpers.FileHandler;
 import helpers.Utils;
+import security.AuthenticationService;
 import security.DigestHandler;
 import security.InsecureHostnameVerifier;
 import security.InsecureTrustManager;
@@ -48,69 +49,6 @@ public class MyMChatCliente extends MChatCliente {
 		super();
 		client = ClientBuilder.newClient();
         target = client.target(baseUri);
-	}
-
-	private static byte[] authenticateUser(String username, String password, String roomName, PBEConfiguration pbe)
-			throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException,
-			InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException,
-			IllegalBlockSizeException, BadPaddingException, ClassNotFoundException, KeyManagementException {
-
-		// hash password
-		String hashedPassword = DigestHandler.hashPassword(password);
-		byte[] hashedPasswordByte = Utils.toByteArray(hashedPassword);
-		int sendedNonce = SecureRandom.getInstanceStrong().nextInt();
-		IvParameterSpec generatedNonce = Utils.createCtrIvForAES(sendedNonce, new SecureRandom());
-
-		//Concatenate the bytes of nonce and ash pass and only nonce and password go encrypted
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-		outputStream.write( generatedNonce.getIV() );
-		outputStream.write( hashedPasswordByte );
-		
-		byte messageByte[] = outputStream.toByteArray( );
-
-		byte[] messageByteCipher = MessageCipherHandler.cipherMessageWithPBE(hashedPassword, pbe, messageByte);
-
-		// configure the SSLContext with a TrustManager
-        SSLContext ctx = SSLContext.getInstance("TLSv1.2");
-        ctx.init(new KeyManager[0], new TrustManager[] {new InsecureTrustManager()}, new SecureRandom());
-        SSLContext.setDefault(ctx);
-        
-		String hostname = "localhost:9090";
-		Client client = ClientBuilder.newBuilder()
-									 .hostnameVerifier(new InsecureHostnameVerifier())
-									 .build();
-
-		URI baseURI = UriBuilder.fromUri("https://" + hostname + "/").build();
-		WebTarget target = client.target(baseURI);
-		
-		// if password don't match it will receive error message
-		Response encriptedRes = target.path("Authentication/" + username + "/" + roomName).request()
-				.accept(MediaType.APPLICATION_OCTET_STREAM)
-				.post(Entity.entity(messageByteCipher, MediaType.APPLICATION_OCTET_STREAM));
-
-		// Não tenho a certeza
-		byte[] encriptedFileCrypto = encriptedRes.readEntity(byte[].class);
-		
-		byte[] decriptedBytes = MessageCipherHandler.uncipherMessageWithPBE(hashedPassword, encriptedFileCrypto, pbe);
-		
-		ByteArrayInputStream inputStream = new ByteArrayInputStream( decriptedBytes );
-		
-		//get the iv bytes
-		byte[] ivNumberBytes = new byte[4];
-		inputStream.read(ivNumberBytes,0,4);
-		byte[] ivParamenters = new byte[12];
-		inputStream.read(ivParamenters, 0, 12);
-		
-		ByteBuffer numBuffer = ByteBuffer.wrap(ivNumberBytes);
-		int newNonce = numBuffer.getInt();
-		
-		if(sendedNonce + 1 != newNonce)
-			System.out.println("Message replying");
-		
-		byte[] decriptedCrypto = new byte[inputStream.available()];
-		inputStream.read(decriptedCrypto, 0, inputStream.available());
-		
-		return decriptedCrypto;
 	}
 
 	/**
@@ -166,9 +104,8 @@ public class MyMChatCliente extends MChatCliente {
 			
 			frame.join(username, group, port, ttl);
 
-			// call the above method to send the request to the server
-			authenticateUser(username, password, group.getHostAddress(),
-					FileHandler.readPBEncryptionFile("configs/" + group.getHostAddress() + ".pbe"));
+			//send the request to the server to authenticate the user
+			AuthenticationService.authenticateUser(username, password, group.getHostAddress());
 
 		} catch (Throwable e) {
 			e.printStackTrace();

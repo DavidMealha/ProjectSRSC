@@ -8,12 +8,15 @@ import java.util.HashMap;
 
 import security.RoomPermissions;
 
-public class ServerFileHandler {
+public class ServerFileHandler{
 	
 	private static final String USERFILENAME = "database/usersPasswords.txt";
 	private static final String USERPERMFILENAME = "database/acessControl.txt";
 
-	
+	/**
+	 * 
+	 * @return
+	 */
 	public static RoomPermissions getRoomPermissions() {
 		try (BufferedReader br = new BufferedReader(new FileReader(USERPERMFILENAME))) {
 			
@@ -45,30 +48,11 @@ public class ServerFileHandler {
 		return null;
 	}
 	
-	// 
+	/**
+	 * 
+	 * @return
+	 */
 	public static HashMap<String, String> getUserFromFile() {
-		
-		try (BufferedReader br = new BufferedReader(new FileReader(USERFILENAME))) {
-
-			HashMap<String, String> userHash = new HashMap<String, String>();
-			
-			String line = br.readLine();
-			while (line != null) {
-				// if has # it's a comment, so ignore it
-				if (!line.startsWith("#")) {
-					String[] lineSplitted = line.split(":");
-					String name = lineSplitted[0];
-					String ashKey = lineSplitted[1].split("#")[0].trim();
-
-					userHash.put(name, ashKey);
-				}
-				line = br.readLine();
-			}
-
-			return userHash;
-		} catch (IOException e) {
-			System.out.println("Failed to read the file." + e.getMessage());
-		}
-		return null;
+		return FileHandler.getKeyValuesFromFile(USERFILENAME);
 	}
 }

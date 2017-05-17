@@ -46,6 +46,25 @@ public class FileHandler {
 
 		return pbe;
 	}
+	
+	/**
+	 * Method to read the tls.config file and store it in an auxiliar class.
+	 * @param filename
+	 * @return
+	 */
+	public static TLSConfiguration readTLSConfiguration(String filename){
+		HashMap<String, String> hashmap = getKeyValuesFromFile(filename);
+		
+		TLSConfiguration tlsConfig = new TLSConfiguration();
+		tlsConfig.setVersion(hashmap.get("TLS"));
+		tlsConfig.setAuthenticationType(hashmap.get("AUT"));
+		tlsConfig.setCiphersuite(hashmap.get("CIPHERSUITE"));
+		tlsConfig.setPrivateKeyStoreFilename(hashmap.get("PRIVKEYSTORE"));
+		tlsConfig.setTruststoreFilename(hashmap.get("TRUSTSTORE"));
+		
+		return tlsConfig;
+		
+	}
 
 	/**
 	 * Auxiliar method just to read a file and store the configuration in pair

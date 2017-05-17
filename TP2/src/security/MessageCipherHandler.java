@@ -40,13 +40,12 @@ public class MessageCipherHandler {
 	 * @throws IllegalBlockSizeException
 	 * @throws IOException
 	 */
-	public static byte[] cipherMessageWithPBE(String ashPassword, PBEConfiguration pbe, byte[] message)
+	public static byte[] cipherMessageWithPBE(String hashPassword, PBEConfiguration pbe, byte[] message)
 			
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
 				InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
-		// before putting the password here, we should hash it, also
-		// authenticate with the hash.
-		PBEKeySpec keySpec = new PBEKeySpec(ashPassword.toCharArray());
+		
+		PBEKeySpec keySpec = new PBEKeySpec(hashPassword.toCharArray());
 
 		// e.g ("PBEWithHmacSHA256AndAES_256")
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());
@@ -76,13 +75,13 @@ public class MessageCipherHandler {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static byte[] uncipherMessageWithPBE(String ashPassword, byte[] message, PBEConfiguration pbe)
+	public static byte[] uncipherMessageWithPBE(String hashPassword, byte[] message, PBEConfiguration pbe)
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
 			ClassNotFoundException {
 
 		// Create PBEKeySpec for the password given
-		PBEKeySpec keySpec = new PBEKeySpec(ashPassword.toCharArray());
+		PBEKeySpec keySpec = new PBEKeySpec(hashPassword.toCharArray());
 
 		// e.g ("PBEWithHmacSHA256AndAES_256")
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());

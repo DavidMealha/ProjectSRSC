@@ -16,7 +16,6 @@ public class PBEConfiguration {
 	}
 
 	public PBEConfiguration(String algorithm, String salt, int counter) {
-		super();
 		this.algorithm = algorithm;
 		this.salt = salt;
 		this.counter = counter;

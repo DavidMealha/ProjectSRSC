@@ -1,5 +1,6 @@
 package server;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.URI;
 import java.security.SecureRandom;
@@ -20,7 +21,9 @@ import com.sun.net.httpserver.HttpServer;
 import security.InsecureTrustManager;
 
 public class RestServer {
-
+	
+	static final File KEYSTORE = new File("configs/server.jks");
+	
 	public static void main(String[] args) throws Exception {
 		URI baseUri = UriBuilder.fromUri("https://0.0.0.0/").port(9090).build();
 		ResourceConfig config = new ResourceConfig();
