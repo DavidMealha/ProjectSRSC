@@ -27,110 +27,114 @@ public class TLSServer {
 		}
 
 		System.out.println("Server running!");
+		
+		while(true){
 
-		try {
-			// read the tls configuration file
-			TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(SERVER_TLS_CONFIGURATION);
-
-			char[] keystorePassword = args[0].toCharArray(); // password da keystore
-			char[] entryPassword = args[1].toCharArray(); // password entry
-			int port = Integer.parseInt(args[2]); //port
-			
-			SSLSocket c = null;
-			SSLServerSocket s = null;
-			
-			if (tlsConfig.getAuthenticationType().equals("SERVIDOR")
-					|| tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
+			try {
+				// read the tls configuration file
+				TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(SERVER_TLS_CONFIGURATION);
+		
+				char[] keystorePassword = args[0].toCharArray(); // password da keystore
+				char[] entryPassword = args[1].toCharArray(); // password entry
+				int port = Integer.parseInt(args[2]); //port
 				
-				// load server keystore
-				KeyStore ks = KeyStore.getInstance("JKS");
-				ks.load(new FileInputStream(CERTIFICATES_PATH + tlsConfig.getPrivateKeyStoreFilename() + KEYSTORE_EXTENSION), keystorePassword);
-
-				KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-				kmf.init(ks, entryPassword);
-
-				//get the version from the config file
-				SSLContext sc = SSLContext.getInstance(tlsConfig.getVersion());
-				sc.init(kmf.getKeyManagers(), null, null);
+				SSLSocket c = null;
+				SSLServerSocket s = null;
 				
-				SSLServerSocketFactory ssf = sc.getServerSocketFactory();
-				s = (SSLServerSocket) ssf.createServerSocket(port);
-
-				if (tlsConfig.getAuthenticationType().equals("SERVIDOR")) {
-					s.setNeedClientAuth(false);
-				} else {
-					s.setNeedClientAuth(true);
+				if (tlsConfig.getAuthenticationType().equals("SERVIDOR")
+						|| tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
+					
+					// load server keystore
+					KeyStore ks = KeyStore.getInstance("JKS");
+					ks.load(new FileInputStream(CERTIFICATES_PATH + tlsConfig.getPrivateKeyStoreFilename() + KEYSTORE_EXTENSION), keystorePassword);
+		
+					KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+					kmf.init(ks, entryPassword);
+		
+					//get the version from the config file
+					SSLContext sc = SSLContext.getInstance(tlsConfig.getVersion());
+					sc.init(kmf.getKeyManagers(), null, null);
+					
+					SSLServerSocketFactory ssf = sc.getServerSocketFactory();
+					s = (SSLServerSocket) ssf.createServerSocket(port);
+		
+					if (tlsConfig.getAuthenticationType().equals("SERVIDOR")) {
+						s.setNeedClientAuth(false);
+					} else {
+						s.setNeedClientAuth(true);
+					}
+		
+					s.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
+					s.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
+		
+					c = (SSLSocket) s.accept();
+				} 
+				else 
+				{
+					// s condiciona o fluxo se é inicializado pelo cliente ou o
+					// servidor
+					// como o cliente fosse o servidor fosse e assim autentica-se e
+					// o servidor
+		
+					// SSLServerSocket passa para o cliente, ou simplesmente no
+					// SSLSocket o servidor é que faz o startHandshake?
+					c.startHandshake();
 				}
-
-				s.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
-				s.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
-
-				c = (SSLSocket) s.accept();
-			} 
-			else 
-			{
-				// s condiciona o fluxo se é inicializado pelo cliente ou o
-				// servidor
-				// como o cliente fosse o servidor fosse e assim autentica-se e
-				// o servidor
-
-				// SSLServerSocket passa para o cliente, ou simplesmente no
-				// SSLSocket o servidor é que faz o startHandshake?
-				c.startHandshake();
-			}
-
-			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
-			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));
-
-			
-			// Service from this server ...
-			String m = "Welcome!";
-			w.write(m, 0, m.length());
-			w.newLine();
-			w.flush();
-			
-			String username = r.readLine();
-			System.out.println("User trying to authenticate: " + username);
-			
-			String hashedPwdReceived = r.readLine();
-			System.out.println("With this password: " + hashedPwdReceived);
-			
-			String multicastAddress = r.readLine();
-			System.out.println("Trying to access the address : " + multicastAddress);
-			
-			//compares password stored in the server
-			String storedHashedPassword = ServerFileHandler.getUserPasswordFromFile(username);
-			
-			String authResult = "";
-			
-			if(storedHashedPassword.equals(hashedPwdReceived)){
+		
+				BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
+				BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));
+		
 				
-				//check if can access that room
-				if(ServerFileHandler.isUserAllowed(multicastAddress, username)){
-					authResult = "SUCCESS";
+				// Service from this server ...
+				String m = "Welcome!";
+				w.write(m, 0, m.length());
+				w.newLine();
+				w.flush();
+				
+				String username = r.readLine();
+				System.out.println("User trying to authenticate: " + username);
+				
+				String hashedPwdReceived = r.readLine();
+				System.out.println("With this password: " + hashedPwdReceived);
+				
+				String multicastAddress = r.readLine();
+				System.out.println("Trying to access the address : " + multicastAddress);
+				
+				//compares password stored in the server
+				String storedHashedPassword = ServerFileHandler.getUserPasswordFromFile(username);
+				
+				String authResult = "";
+				
+				if(storedHashedPassword.equals(hashedPwdReceived)){
+					
+					//check if can access that room
+					if(ServerFileHandler.isUserAllowed(multicastAddress, username)){
+						authResult = "true";
+					}
+					else
+					{
+						authResult = "Access Control Failed";
+					}
 				}
 				else
 				{
 					authResult = "Authentication Failed";
 				}
-			}
-			else
-			{
-				authResult = "Authentication Failed";
+				
+				w.write(authResult.toCharArray(), 0, authResult.length());
+				w.newLine();
+				w.flush();
+				
+				//closing connection and data stream
+				w.close();
+				r.close();
+				c.close();
+				s.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				//System.err.println(e.toString());
 			}
 			
-			w.write(authResult.toCharArray(), 0, authResult.length());
-			w.newLine();
-			w.flush();
-			
-			//closing connection and data stream
-			w.close();
-			r.close();
-			c.close();
-			s.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-			//System.err.println(e.toString());
 		}
 	}
 

@@ -51,16 +51,26 @@ public class MyMChatCliente extends MChatCliente {
 
 		try {
 			MChatCliente frame = new MyMChatCliente();
-			frame.setSize(800, 300);
-			frame.setVisible(true);
-
-			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
 			
-			frame.join(username, group, port, ttl);
+			//ask for the password before showing the chat
+			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
 			
 			//clientKeyStorePassword
 			TLSClient tlsClient = new TLSClient(username, password, group.getHostAddress(), "");
 			tlsClient.run();
+			
+			if(tlsClient.getAuthenticationSuccess()){
+				frame.setSize(800, 300);
+				frame.setVisible(true);
+				frame.join(username, group, port, ttl);
+			}else{
+				System.err.println("Autenticação falhada!");
+				System.exit(1);
+			}
+			
+			
+			
+			
 			
 
 		} catch (Throwable e) {
