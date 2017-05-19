@@ -53,6 +53,7 @@ public class ServerFileHandler{
 	 * @return
 	 */
 	public static String getUserPasswordFromFile(String username) {
-		return FileHandler.getKeyValuesFromFile(USERFILENAME).get(username);
+		String password = FileHandler.getKeyValuesFromFile(USERFILENAME).get(username);
+		return password == null ? "" : password;
 	}
 }
