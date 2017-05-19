@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import security.RoomPermissions;
+import helpers.RoomPermissions;
 
 public class ServerFileHandler{
 	
@@ -17,7 +17,7 @@ public class ServerFileHandler{
 	 * 
 	 * @return
 	 */
-	public static RoomPermissions getRoomPermissions() {
+	public static boolean isUserAllowed(String roomAddres, String username) {
 		try (BufferedReader br = new BufferedReader(new FileReader(USERPERMFILENAME))) {
 			
 			HashMap<String, ArrayList<String>> dataStruct = new HashMap<String, ArrayList<String>>();
@@ -41,18 +41,18 @@ public class ServerFileHandler{
 				line = br.readLine();
 			}
 
-			return new RoomPermissions(dataStruct);
+			return new RoomPermissions(dataStruct).isAllowed(roomAddres, username);
 		} catch (IOException e) {
 			System.out.println("Failed to read the file." + e.getMessage());
 		}
-		return null;
+		return false;
 	}
 	
 	/**
 	 * 
 	 * @return
 	 */
-	public static HashMap<String, String> getUserFromFile() {
-		return FileHandler.getKeyValuesFromFile(USERFILENAME);
+	public static String getUserPasswordFromFile(String username) {
+		return FileHandler.getKeyValuesFromFile(USERFILENAME).get(username);
 	}
 }

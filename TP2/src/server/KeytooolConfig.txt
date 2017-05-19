@@ -1,0 +1,45 @@
+keytool -genkey -keyalg RSA -alias Server -keystore serverRSA.jks -storepass serverRSA -validity 360 -keysize 4096
+
+Dados: Server, Server, Server, Lisbon, Lisbon, PT
+EntryPwd : serverRSA
+KeystorePwd : serverRSA
+
+keytool -export -alias Server -keystore serverRSA.jks -file serverRSA.cer
+
+==================================================================================================
+
+keytool -genkey -keyalg DSA -alias Server -keystore serverDSA.jks -storepass serverDSA -validity 360 -keysize 1024
+
+Dados: Server, Server, Server, Lisbon, Lisbon, PT
+EntryPwd : serverDSA
+KeystorePwd : serverDSA
+
+keytool -export -alias Server -keystore serverDSA.jks -file serverDSA.cer
+
+==================================================================================================
+
+keytool -genkey -keyalg RSA -alias Alice -keystore aliceRSA.jks -storepass aliceRSA -validity 360 -keysize 2048
+
+Dados: Alice, Alice, Alice, Almada, Setubal, PT
+EntryPwd : aliceRSA
+KeystorePwd : aliceRSA
+
+keytool -export -alias Alice -keystore aliceRSA.jks -file aliceRSA.cer
+
+==================================================================================================
+
+(certificates can be .cer, .csr, .pem, .p12, etc..)
+
+openssl req -new -newkey rsa:2048 -nodes -out ca.cer -keyout ca.key
+
+Dados: PT, Lisbon, Lisbon, CA, CA, CA, ca@ca.ca, caRSA, CA
+
+openssl x509 -trustout -signkey ca.key -days 365 -req -in ca.cer -out ca.cer
+
+==================================================================================================
+
+openssl req -new -key key_A.key -out cer_A.cer
+
+openssl x509 -re -days 365 -in cer_A.cer -CA ca.cer -out cer_A.cer -CAkey ca.key -set_serial 01 -out cer_A.cer
+
+==================================================================================================

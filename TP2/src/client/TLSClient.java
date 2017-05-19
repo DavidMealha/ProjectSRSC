@@ -3,32 +3,53 @@ package client;
 import java.util.*;
 import java.io.*;
 import java.net.*;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+
 import javax.net.ssl.*;
 
+import helpers.FileHandler;
 import helpers.TLSConfiguration;
+import security.DigestHandler;
 
 public class TLSClient {
 	
-	public static void main(String[] args) {
+	private static final String CONFIGS_PATH = "configs/";
+	private static final String TLS_CONFIGURATION_EXTENSION = ".tls.config";
+	private static final String CERTIFICATES_PATH = "certificates/";
+	private static final String KEYSTORE_EXTENSION = ".keystore";
+	
+	private boolean authenticationResult = false;
+	
+	private String username;
+	private String hashedPassword;
+	private String multicastAddress;
+	private String clientKeyStorePassword;
+
+	public TLSClient(String username, String hashedPassword, String multicastAddress, String clientKeyStorePassword) {
+		this.username = username;
+		this.hashedPassword = hashedPassword;
+		this.multicastAddress = multicastAddress;
+		this.clientKeyStorePassword = clientKeyStorePassword;
+	}
+
+	/**
+	 * 
+	 */
+	public void run(){
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		PrintStream out = System.out;
-
-		File file = new File(".");
-		for(String fileNames : file.list()) System.out.println(fileNames);
 		
-		System.setProperty("javax.net.ssl.trustStore", "src/client/alicetruststore");
-		System.setProperty("javax.net.ssl.trustStorePassword", "alicetrust");
+		// read the tls configuration file
+		TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(CONFIGS_PATH + this.username + TLS_CONFIGURATION_EXTENSION);
+		
+		System.setProperty("javax.net.ssl.trustStore", "certificates/" + tlsConfig.getTruststoreFilename());
+		System.setProperty("javax.net.ssl.trustStorePassword", "clientTrustedStore");
 		
 		SSLSocketFactory f = (SSLSocketFactory) SSLSocketFactory.getDefault();
 		try {
 			
-			SSLSocket c = (SSLSocket) f.createSocket(args[0], Integer.parseInt(args[1]));
-
-			// enable TLSv1.2 and ciphersuites
-//			c.setEnabledProtocols(new String[] { "TLSv1.2" });
-//			c.setEnabledCipherSuites(new String[] { "TLS_RSA_WITH_AES_256_CBC_SHA256" });
-
-			printSocketInfo(c);
+			SSLSocket c = (SSLSocket) f.createSocket("localhost", 4443);
 			
 			//ter que ter o startHandshake depois da parameterização
 			c.startHandshake();
@@ -36,17 +57,17 @@ public class TLSClient {
 			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));
 			
-			String m = null;
-			
-			while ((m = r.readLine()) != null) {
-				out.println(m);
-				m = in.readLine();
-				
-				//send this to the server..
-				w.write(m, 0, m.length());
-				w.newLine();
-				w.flush();
+			String hashedPwd = null;
+			try {
+				hashedPwd = DigestHandler.hashPassword("clientPassword");
+			} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+				e.printStackTrace();
 			}
+			System.out.println(hashedPwd);
+			
+			w.write(hashedPwd);
+			w.newLine();
+			w.flush();
 			
 			w.close();
 			r.close();
@@ -55,6 +76,10 @@ public class TLSClient {
 			e.printStackTrace();
 			//System.err.println(e.toString());
 		}
+	}
+	
+	public static void main(String[] args) {
+		
 	}
 
 	private static void printSocketInfo(SSLSocket s) {

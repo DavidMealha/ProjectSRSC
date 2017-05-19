@@ -1,0 +1,33 @@
+# Gerar chave rsa
+
+openssl genrsa -out server.key 2048
+
+# Gerar certificado rsa em .csr com a chave
+
+openssl req -new -key server.key -out server.csr
+
+# Assinar certificado com a CA e gerar .crt
+
+openssl x509 -req -days 365 -in server.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out server.crt
+
+pwd = server
+
+# Exportar certificado para pkcs12 para exportar keystore
+
+openssl pkcs12 -export -in server.crt -inkey server.key -out server.p12 -name server -CAfile ca.crt -caname root
+
+pwd = server
+
+# Importar a keystore do .p12
+
+keytool -importkeystore -deststorepass server -destkeypass server -destkeystore server.keystore -srckeystore server.p12 -srcstoretype PKCS12 -srcstorepass server -alias server
+
+# Converter certificado .crt para .pem
+
+openssl x509 -in server.crt -out server.pem -outform PEM
+
+#Importar o certificado para uma trusted store
+
+keytool -import -file ca.crt -alias server -keystore clientTrustedStore
+
+pwd= clientTrustedStore
