@@ -3,8 +3,13 @@ package client;
 import java.util.*;
 import java.io.*;
 import java.net.*;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import javax.net.ssl.*;
 
@@ -24,12 +29,14 @@ public class TLSClient {
 	private String username;
 	private String hashedPassword;
 	private String multicastAddress;
-	private String clientKeyStorePassword;
+	private char[] clientKeyStorePassword;
+	private char[] clientEntryPassword;
 
-	public TLSClient(String username, String clearPassword, String multicastAddress, String clientKeyStorePassword) {
+	public TLSClient(String username, String clearPassword, String multicastAddress, String clientKeyStorePassword, String clientEntryPassword) {
 		this.username = username;
 		this.multicastAddress = multicastAddress;
-		this.clientKeyStorePassword = clientKeyStorePassword;
+		this.clientKeyStorePassword = clientKeyStorePassword.toCharArray();
+		this.clientEntryPassword = clientEntryPassword.toCharArray();
 
 		try {
 			this.hashedPassword = DigestHandler.hashPassword(clearPassword);
@@ -52,28 +59,49 @@ public class TLSClient {
 		// read the tls configuration file
 		TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(CONFIGS_PATH + this.username + TLS_CONFIGURATION_EXTENSION);
 
-		System.setProperty("javax.net.ssl.trustStore", "certificates/" + tlsConfig.getTruststoreFilename());
+		System.setProperty("javax.net.ssl.trustStore", CERTIFICATES_PATH + tlsConfig.getTruststoreFilename());
 		System.setProperty("javax.net.ssl.trustStorePassword", "clientTrustedStore");
 
 		SSLSocketFactory f = (SSLSocketFactory) SSLSocketFactory.getDefault();
+		SSLContext ctx;
+		SSLSocket c = null;
+		
+		KeyManagerFactory kmf;
+		KeyStore ks;
+		
 		try {
 
-			SSLSocket c = (SSLSocket) f.createSocket("localhost", 4443);
-
-			if (tlsConfig.getAuthenticationType().equals("SERVIDOR")
-					|| tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
-
-				// ter que ter o startHandshake depois da parameterização
-				c.startHandshake();
-
+			if (tlsConfig.getAuthenticationType().equals("SERVIDOR")) 
+			{
+				c = (SSLSocket) f.createSocket("localhost", 4443);
+			} 
+			else if(tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR"))
+			{
 				// se o cliente tambem tem de se autenticar, vai ter de obter a
 				// keystore, tal como o servidor, por isso é que recebe a keystore password
-				if (tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
-
+				try {
+					ctx = SSLContext.getInstance(tlsConfig.getVersion());
+					
+					ks = KeyStore.getInstance("JKS");
+					ks.load(new FileInputStream(CERTIFICATES_PATH + tlsConfig.getPrivateKeyStoreFilename() + KEYSTORE_EXTENSION), this.clientKeyStorePassword);
+					
+					kmf = KeyManagerFactory.getInstance("SunX509");
+					kmf.init(ks, this.clientEntryPassword);
+					
+					ctx.init(kmf.getKeyManagers(), null, null);
+					
+					f = ctx.getSocketFactory();
+					c = (SSLSocket) f.createSocket("localhost", 4443);
+					
+				} catch (NoSuchAlgorithmException | CertificateException | KeyStoreException | UnrecoverableKeyException | KeyManagementException e) {
+					e.printStackTrace();
 				}
-			} else {
-
+			}else{
+				
 			}
+		
+			// ter que ter o startHandshake depois da parameterização
+			c.startHandshake();
 
 			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));

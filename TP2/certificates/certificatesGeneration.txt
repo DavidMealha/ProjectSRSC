@@ -11,12 +11,14 @@ openssl req -new -key server.key -out server.csr
 openssl x509 -req -days 365 -in server.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out server.crt
 
 pwd = server
+pwd = alice
 
 # Exportar certificado para pkcs12 para exportar keystore
 
 openssl pkcs12 -export -in server.crt -inkey server.key -out server.p12 -name server -CAfile ca.crt -caname root
 
 pwd = server
+pwd = aliceClient
 
 # Importar a keystore do .p12
 

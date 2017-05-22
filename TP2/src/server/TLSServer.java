@@ -33,6 +33,10 @@ public class TLSServer {
 			try {
 				// read the tls configuration file
 				TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(SERVER_TLS_CONFIGURATION);
+				
+				System.setProperty("javax.net.ssl.trustStore", CERTIFICATES_PATH + tlsConfig.getTruststoreFilename());
+				System.setProperty("javax.net.ssl.trustStorePassword", "clientTrustedStore");
+				
 		
 				char[] keystorePassword = args[0].toCharArray(); // password da keystore
 				char[] entryPassword = args[1].toCharArray(); // password entry

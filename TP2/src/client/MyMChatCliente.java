@@ -56,7 +56,7 @@ public class MyMChatCliente extends MChatCliente {
 			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
 			
 			//clientKeyStorePassword
-			TLSClient tlsClient = new TLSClient(username, password, group.getHostAddress(), "");
+			TLSClient tlsClient = new TLSClient(username, password, group.getHostAddress(), "aliceClient", "aliceClient");
 			tlsClient.run();
 			
 			if(tlsClient.getAuthenticationSuccess()){
