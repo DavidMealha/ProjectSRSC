@@ -31,8 +31,11 @@ public class TLSClient {
 	private String multicastAddress;
 	private char[] clientKeyStorePassword;
 	private char[] clientEntryPassword;
+	
+	private String serverAddress;
+	private int serverPort;
 
-	public TLSClient(String username, String clearPassword, String multicastAddress, String clientKeyStorePassword, String clientEntryPassword) {
+	public TLSClient(String username, String clearPassword, String multicastAddress, String clientKeyStorePassword, String clientEntryPassword, String serverAddress, int serverPort) {
 		this.username = username;
 		this.multicastAddress = multicastAddress;
 		this.clientKeyStorePassword = clientKeyStorePassword.toCharArray();
@@ -43,6 +46,9 @@ public class TLSClient {
 		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
 			e.printStackTrace();
 		}
+		
+		this.serverAddress = serverAddress;
+		this.serverPort = serverPort;
 	}
 	
 	public boolean getAuthenticationSuccess(){
@@ -54,7 +60,6 @@ public class TLSClient {
 	 */
 	public void run() {
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-		PrintStream out = System.out;
 
 		// read the tls configuration file
 		TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(CONFIGS_PATH + this.username + TLS_CONFIGURATION_EXTENSION);
@@ -73,9 +78,10 @@ public class TLSClient {
 
 			if (tlsConfig.getAuthenticationType().equals("SERVIDOR")) 
 			{
-				c = (SSLSocket) f.createSocket("localhost", 4443);
+				//might not be needed...
 			} 
-			else if(tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR"))
+			else if(tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR") || 
+					tlsConfig.getAuthenticationType().equals("CLIENTE"))
 			{
 				// se o cliente tambem tem de se autenticar, vai ter de obter a
 				// keystore, tal como o servidor, por isso é que recebe a keystore password
@@ -89,19 +95,26 @@ public class TLSClient {
 					kmf.init(ks, this.clientEntryPassword);
 					
 					ctx.init(kmf.getKeyManagers(), null, null);
-					
 					f = ctx.getSocketFactory();
-					c = (SSLSocket) f.createSocket("localhost", 4443);
 					
 				} catch (NoSuchAlgorithmException | CertificateException | KeyStoreException | UnrecoverableKeyException | KeyManagementException e) {
 					e.printStackTrace();
 				}
-			}else{
-				
 			}
+			
+			c = (SSLSocket) f.createSocket("localhost", 4443);
+			
+			c.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
+			c.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
+			
 		
-			// ter que ter o startHandshake depois da parameterização
-			c.startHandshake();
+			if (tlsConfig.getAuthenticationType().equals("SERVIDOR") ||
+				tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
+				
+				// ter que ter o startHandshake depois da parameterização
+				c.startHandshake();
+			}
+
 
 			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));

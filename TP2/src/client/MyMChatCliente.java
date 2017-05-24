@@ -10,8 +10,8 @@ public class MyMChatCliente extends MChatCliente {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		if ((args.length != 3) && (args.length != 4)) {
-			System.err.println("Utilizar: MyMChatCliente " + "<nickusername> <grupo IPMulticast> <porto> { <ttl> }");
+		if ((args.length != 5) && (args.length != 6)) {
+			System.err.println("Utilizar: MyMChatCliente " + "<nickusername> <grupo IPMulticast> <porto> <keystorePassword> <keystoreEntryPassword> { <ttl> }");
 			System.err.println("       - TTL default = 1");
 			System.exit(1);
 		}
@@ -39,10 +39,13 @@ public class MyMChatCliente extends MChatCliente {
 			System.err.println("Porto invalido: " + args[2]);
 			System.exit(1);
 		}
+		
+		String keystorePassword = args[3];
+		String keystoreEntryPassword = args[4];
 
-		if (args.length >= 4) {
+		if (args.length >= 6) {
 			try {
-				ttl = Integer.parseInt(args[3]);
+				ttl = Integer.parseInt(args[5]);
 			} catch (NumberFormatException e) {
 				System.err.println("TTL invalido: " + args[3]);
 				System.exit(1);
@@ -56,10 +59,11 @@ public class MyMChatCliente extends MChatCliente {
 			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
 			
 			//clientKeyStorePassword
-			TLSClient tlsClient = new TLSClient(username, password, group.getHostAddress(), "aliceClient", "aliceClient");
+			TLSClient tlsClient = new TLSClient(username, password, group.getHostAddress(), keystorePassword, keystoreEntryPassword, "localhost", 4443);
 			tlsClient.run();
 			
 			if(tlsClient.getAuthenticationSuccess()){
+				System.err.println("Autenticação bem sucedida!");
 				frame.setSize(800, 300);
 				frame.setVisible(true);
 				frame.join(username, group, port, ttl);

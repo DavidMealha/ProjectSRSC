@@ -45,8 +45,8 @@ public class TLSServer {
 				SSLSocket c = null;
 				SSLServerSocket s = null;
 				
-				if (tlsConfig.getAuthenticationType().equals("SERVIDOR")
-						|| tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
+				if (tlsConfig.getAuthenticationType().equals("SERVIDOR") || 
+					tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
 					
 					// load server keystore
 					KeyStore ks = KeyStore.getInstance("JKS");
@@ -82,6 +82,16 @@ public class TLSServer {
 		
 					// SSLServerSocket passa para o cliente, ou simplesmente no
 					// SSLSocket o servidor é que faz o startHandshake?
+					SSLContext sc = SSLContext.getInstance(tlsConfig.getVersion());
+					sc.init(null, null, null);
+					
+					SSLServerSocketFactory ssf = sc.getServerSocketFactory();
+					s = (SSLServerSocket) ssf.createServerSocket(port);
+					
+					s.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
+					s.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
+					
+					c = (SSLSocket) s.accept();
 					c.startHandshake();
 				}
 		
