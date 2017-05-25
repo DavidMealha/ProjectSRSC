@@ -106,15 +106,12 @@ public class TLSClient {
 			
 			c.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
 			c.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
-			
 		
-			if (tlsConfig.getAuthenticationType().equals("SERVIDOR") ||
-				tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR")) {
-				
-				// ter que ter o startHandshake depois da parameterização
-				c.startHandshake();
+			if(tlsConfig.getAuthenticationType().equals("CLIENTE")){
+				c.setUseClientMode(false);
 			}
-
+			
+			c.startHandshake();
 
 			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));

@@ -91,8 +91,9 @@ public class TLSServer {
 					s.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
 					s.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
 					
+					s.setUseClientMode(true);
+					
 					c = (SSLSocket) s.accept();
-					c.startHandshake();
 				}
 		
 				BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
