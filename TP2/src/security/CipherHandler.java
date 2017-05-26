@@ -31,6 +31,7 @@ import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import helpers.FileHandler;
+import helpers.Utils;
 import helpers.UtilsBase;
 
 /**
@@ -44,11 +45,13 @@ public class CipherHandler {
 	private static final String LOGFILESDIR = "configs/";
 	private static final String PBEEXTENSION = ".pbe";
 	private static final String CRYPTOEXTENSION = ".crypto";
-	
+
 	/**
 	 * 
-	 * @param buffer - byte[] to cipher
-	 * @param cipherConfiguration - object with all the .crypto information
+	 * @param buffer
+	 *            - byte[] to cipher
+	 * @param cipherConfiguration
+	 *            - object with all the .crypto information
 	 * 
 	 * @return - buffer ciphered with the .crypto ciphersuite
 	 * 
@@ -66,9 +69,10 @@ public class CipherHandler {
 			throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException,
 			IllegalStateException {
-		
+
 		// check if it's ecb, and then add no IV? or just assume it will use
-		// when it's ECB or CBC the buffer size should be multiple of the block size.
+		// when it's ECB or CBC the buffer size should be multiple of the block
+		// size.
 		String algorithmMode = cipherConfiguration.getCiphersuite().split("/")[1];
 
 		// generate an initialization vector
@@ -77,7 +81,8 @@ public class CipherHandler {
 
 		IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 
-		SecretKey key = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getKeyValue()), cipherConfiguration.getCiphersuite().split("/")[0]);
+		SecretKey key = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getKeyValue()),
+				cipherConfiguration.getCiphersuite().split("/")[0]);
 
 		// get instance of cipher
 		Cipher cipher = Cipher.getInstance(cipherConfiguration.getCiphersuite(), "BC");
@@ -86,9 +91,10 @@ public class CipherHandler {
 		Mac mac = Mac.getInstance(cipherConfiguration.getMacAlgorithm(), "BC");
 
 		// generate the mac key
-		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()), cipherConfiguration.getMacAlgorithm());
+		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()),
+				cipherConfiguration.getMacAlgorithm());
 
-		//if it's CBC or CTR
+		// if it's CBC or CTR
 		if (!algorithmMode.equals("ECB")) {
 			// initialize encryption mode
 			cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
@@ -101,7 +107,7 @@ public class CipherHandler {
 		byte[] cipherText = new byte[cipher.getOutputSize(buffer.length + mac.getMacLength())];
 
 		int ctLength = cipher.update(buffer, 0, buffer.length, cipherText, 0);
-		
+
 		mac.init(macKey);
 		mac.update(buffer);
 
@@ -113,8 +119,10 @@ public class CipherHandler {
 	/**
 	 * 
 	 * 
-	 * @param buffer - byte[] to uncipher
-	 * @param cipherConfiguration - object with all the .crypto information
+	 * @param buffer
+	 *            - byte[] to uncipher
+	 * @param cipherConfiguration
+	 *            - object with all the .crypto information
 	 * 
 	 * @return - buffer unciphered with the .crypto ciphersuite
 	 * 
@@ -126,7 +134,7 @@ public class CipherHandler {
 	 * @throws NoSuchAlgorithmException
 	 * @throws UnsupportedEncodingException
 	 * @throws InvalidAlgorithmParameterException
-	 * @throws ShortBufferException 
+	 * @throws ShortBufferException
 	 */
 	public static byte[] uncipherText(byte[] buffer, CipherConfiguration cipherConfiguration)
 			throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException,
@@ -135,34 +143,36 @@ public class CipherHandler {
 
 		// e.g: CBC, ECB, CTR
 		String algorithmMode = cipherConfiguration.getCiphersuite().split("/")[1];
-		
+
 		byte[] ivBytes = new byte[] { 0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x08, 0x06, 0x05, 0x04, 0x03,
 				0x02, 0x01, 0x00 };
 
 		IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 
 		// read the key that was generated in the file
-		SecretKey key = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getKeyValue()), cipherConfiguration.getCiphersuite().split("/")[0]);
+		SecretKey key = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getKeyValue()),
+				cipherConfiguration.getCiphersuite().split("/")[0]);
 
 		// get instance of cipher
 		Cipher cipher = Cipher.getInstance(cipherConfiguration.getCiphersuite(), "BC");
 
 		// get instance of MAC
 		Mac mac = Mac.getInstance(cipherConfiguration.getMacAlgorithm(), "BC");
-		
-		// generate the mac key
-		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()), cipherConfiguration.getMacAlgorithm());
 
-		//if it's CBC or CTR
+		// generate the mac key
+		Key macKey = new SecretKeySpec(UtilsBase.hexStringToByteArray(cipherConfiguration.getMacKeyValue()),
+				cipherConfiguration.getMacAlgorithm());
+
+		// if it's CBC or CTR
 		if (!algorithmMode.equals("ECB")) {
 			cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 		} else {
 			cipher.init(Cipher.DECRYPT_MODE, key);
 		}
-		
+
 		int ctLength = buffer.length;
 		byte[] plainText = cipher.doFinal(buffer, 0, ctLength);
-			
+
 		int messageLength = plainText.length - mac.getMacLength();
 
 		// Verificaao Mac
@@ -192,11 +202,10 @@ public class CipherHandler {
 	 */
 	public static CipherOutputStream cipherFileWithPBE(String password, PBEConfiguration pbe,
 			CipherConfiguration cipherConfiguration, OutputStream outStream)
-			
+
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
-				InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
-		// before putting the password here, we should hash it, also
-		// authenticate with the hash.
+			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
+
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
 
 		// e.g ("PBEWithHmacSHA256AndAES_256")
@@ -222,6 +231,38 @@ public class CipherHandler {
 	}
 
 	/**
+	 * 
+	 * @param password
+	 * @param pbe
+	 * @param cipherConfiguration
+	 * @return
+	 */
+	public static String cipherFileContentWithPBE(String password, PBEConfiguration pbe,
+		CipherConfiguration cipherConfiguration) {
+		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+
+		try {
+			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());
+			SecretKey key = keyFactory.generateSecret(keySpec);
+
+			PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
+			Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
+			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
+
+			byte[] cipheredFile = cipher.doFinal(cipherConfiguration.toSimpleStringFormat().getBytes());
+			
+			return Utils.toHex(cipheredFile);
+		} 
+		catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException
+				| InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchPaddingException
+				| InvalidKeySpecException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	/**
 	 * Method to uncipher the file with the ciphering configuration with
 	 * PBEncryption
 	 * 
@@ -235,14 +276,15 @@ public class CipherHandler {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static CipherConfiguration uncipherFileWithPBE(String password, String multicastAddress)
+	public static CipherConfiguration uncipherFileWithPBE(String password, String path)
 			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
 			ClassNotFoundException {
 		// read the ciphered file, that is saved as a ciphered object in a whole
-		InputStream iStream = FileHandler.readCiphersuiteFileEncrypted(LOGFILESDIR + multicastAddress + CRYPTOEXTENSION);
+		InputStream iStream = FileHandler
+				.readCiphersuiteFileEncrypted(path + CRYPTOEXTENSION);
 
-		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(LOGFILESDIR + multicastAddress + PBEEXTENSION);
+		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(path + PBEEXTENSION);
 
 		// Create PBEKeySpec for the password given
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());

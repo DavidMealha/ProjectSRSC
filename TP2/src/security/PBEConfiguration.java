@@ -44,5 +44,9 @@ public class PBEConfiguration {
 	public void setCounter(int counter) {
 		this.counter = counter;
 	}
-
+	
+	@Override
+	public String toString(){
+		return "pbe: " + this.algorithm + " | salt: " + this.salt + " | counter: " + this.counter;
+	}
 }

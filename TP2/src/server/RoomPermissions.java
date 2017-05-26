@@ -1,4 +1,4 @@
-package helpers;
+package server;
 
 import java.util.ArrayList;
 import java.util.HashMap;

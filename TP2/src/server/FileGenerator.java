@@ -1,4 +1,4 @@
-package filegenerator;
+package server;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -30,7 +30,7 @@ import helpers.UtilsBase;
  */
 public class FileGenerator {
 
-	private static final String LOGFILESDIR = "configs/";
+	private static final String LOGFILESDIR = "database/";
 	private static final String PBEEXTENSION = ".pbe";
 	private static final String CRYPTOEXTENSION = ".crypto";
 

@@ -18,6 +18,15 @@ public class CipherConfiguration implements Serializable {
 
 	public CipherConfiguration() {
 	}
+	
+	public CipherConfiguration(CipherConfiguration cipherConfig){
+		this.ciphersuite = cipherConfig.getCiphersuite();
+		this.keySize = cipherConfig.getKeySize();
+		this.keyValue = cipherConfig.getKeyValue();
+		this.macAlgorithm = cipherConfig.getMacAlgorithm();
+		this.macKeySize = cipherConfig.getMacKeySize();
+		this.macKeyValue = cipherConfig.getMacKeyValue();
+	}
 
 	public String getCiphersuite() {
 		return ciphersuite;
@@ -72,6 +81,11 @@ public class CipherConfiguration implements Serializable {
 		return "CIPHERSUITE: " + this.ciphersuite + "\n" + "KEYSIZE: " + this.keySize + "\n" + "KEYVALUE: "
 				+ this.keyValue + "\n" + "MAC: " + this.macAlgorithm + "\n" + "MACKEYSIZE: " + this.macKeySize + "\n"
 				+ "MACKEYVALUE: " + this.macKeyValue;
+	}
+	
+	public String toSimpleStringFormat(){
+		return "ciphersuite: " + this.ciphersuite + " | keysize: " + this.keySize + " | keyvalue: " + this.keyValue 
+				+ " | mac: " + this.macAlgorithm + " | mackeysize: " + this.macKeySize + " | mackeyvalue: " + this.macKeyValue;
 	}
 
 }

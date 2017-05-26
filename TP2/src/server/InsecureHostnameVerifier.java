@@ -1,4 +1,4 @@
-package security;
+package server;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;

@@ -126,7 +126,7 @@ public class TLSClient {
 			// write hashed password
 			w.write(hashedPassword);
 			w.newLine();
-
+			
 			// write multicast address for access control
 			w.write(multicastAddress);
 			w.newLine();
@@ -135,6 +135,11 @@ public class TLSClient {
 			w.flush();
 
 			String authenticationResult = r.readLine();
+			
+			String pbeConfig = r.readLine();
+			System.out.println(pbeConfig);
+			String cryptoContent = r.readLine();
+			System.out.println(cryptoContent);
 			
 			String m = "";
 			while ((m = r.readLine()) != null) {

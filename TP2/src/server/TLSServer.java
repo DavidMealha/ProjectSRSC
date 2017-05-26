@@ -2,17 +2,26 @@ package server;
 
 import java.io.*;
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.net.ssl.*;
 
 import helpers.FileHandler;
 import helpers.ServerFileHandler;
 import helpers.TLSConfiguration;
+import security.CipherConfiguration;
+import security.CipherHandler;
+import security.PBEConfiguration;
 
 public class TLSServer {
 
-	private static final String SERVER_TLS_CONFIGURATION = "configs/server.tls.config";
+	private static final String SERVER_TLS_CONFIGURATION = "server.tls.config";
 	private static final String CERTIFICATES_PATH = "certificates/";
 	private static final String KEYSTORE_EXTENSION = ".keystore";
+	private static final String SERVER_FILES_PATH = "database/";
 	
 	/**
 	 * 
@@ -21,8 +30,8 @@ public class TLSServer {
 	 * @param port
 	 */
 	public static void main(String[] args) {
-		if (args.length != 3) {
-			System.out.println("3 Arguments required: keystorePassword entryPassword port");
+		if (args.length != 4) {
+			System.out.println("4 Arguments required: keystorePassword entryPassword serverPbePassword port");
 			System.exit(0);
 		}
 
@@ -32,7 +41,7 @@ public class TLSServer {
 
 			try {
 				// read the tls configuration file
-				TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(SERVER_TLS_CONFIGURATION);
+				TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(SERVER_FILES_PATH + SERVER_TLS_CONFIGURATION);
 				
 				System.setProperty("javax.net.ssl.trustStore", CERTIFICATES_PATH + tlsConfig.getTruststoreFilename());
 				System.setProperty("javax.net.ssl.trustStorePassword", "clientTrustedStore");
@@ -40,7 +49,8 @@ public class TLSServer {
 		
 				char[] keystorePassword = args[0].toCharArray(); // password da keystore
 				char[] entryPassword = args[1].toCharArray(); // password entry
-				int port = Integer.parseInt(args[2]); //port
+				int port = Integer.parseInt(args[3]); //port
+				String serverPBEPassword = args[2];
 				
 				SSLSocket c = null;
 				SSLServerSocket s = null;
@@ -75,13 +85,6 @@ public class TLSServer {
 				} 
 				else 
 				{
-					// s condiciona o fluxo se é inicializado pelo cliente ou o
-					// servidor
-					// como o cliente fosse o servidor fosse e assim autentica-se e
-					// o servidor
-		
-					// SSLServerSocket passa para o cliente, ou simplesmente no
-					// SSLSocket o servidor é que faz o startHandshake?
 					SSLContext sc = SSLContext.getInstance(tlsConfig.getVersion());
 					sc.init(null, null, null);
 					
@@ -115,30 +118,24 @@ public class TLSServer {
 				String multicastAddress = r.readLine();
 				System.out.println("Trying to access the address : " + multicastAddress);
 				
-				//compares password stored in the server
-				String storedHashedPassword = ServerFileHandler.getUserPasswordFromFile(username);
-				
-				String authResult = "";
-				
-				if(storedHashedPassword.equals(hashedPwdReceived)){
-					
-					//check if can access that room
-					if(ServerFileHandler.isUserAllowed(multicastAddress, username)){
-						authResult = "true";
-					}
-					else
-					{
-						authResult = "Access Control Failed";
-					}
-				}
-				else
-				{
-					authResult = "Authentication Failed";
-				}
+				String authResult = validateAuthentication(hashedPwdReceived, multicastAddress, username);
 				
 				w.write(authResult.toCharArray(), 0, authResult.length());
 				w.newLine();
 				w.flush();
+				
+				if(authResult.equals("true")){
+					//write first the pbe config with the salt and counter
+					String pbe = FileHandler.readPBEncryptionFile(SERVER_FILES_PATH + multicastAddress + ".pbe").toString();
+					w.write(pbe, 0, pbe.length());
+					w.newLine();
+					
+					//write the configuration encrypted with the pbe config and user password
+					String crypto = cipherClientCryptoWithPBE(multicastAddress, hashedPwdReceived, serverPBEPassword);
+					w.write(crypto, 0, crypto.length());
+					w.newLine();
+					w.flush();
+				}
 				
 				//closing connection and data stream
 				w.close();
@@ -151,6 +148,55 @@ public class TLSServer {
 			}
 			
 		}
+	}
+	
+	/**
+	 * 
+	 * @param hashedPasswordReceived
+	 * @param multicastAddress
+	 * @param username
+	 * @return
+	 */
+	private static String validateAuthentication(String hashedPasswordReceived, String multicastAddress, String username){
+		//compares password stored in the server
+		String storedHashedPassword = ServerFileHandler.getUserPasswordFromFile(username);
+		
+		if(storedHashedPassword.equals(hashedPasswordReceived)){
+			//check if can access that room
+			if(ServerFileHandler.isUserAllowed(multicastAddress, username)){
+				return "true";
+			} else {
+				return "Access Control Failed";
+			}
+		} else {
+			return "Authentication Failed";
+		}
+	}
+	
+	/**
+	 * ler ficheiro .crypto do servidor, que estava encriptado com as credenciais do servidor
+	 * encriptar com esquema PBE com a password do utilizador
+	 * enviar em String ou char[] o .crypto encriptado com PBE para o utilizador
+	 * @param multicastAddress
+	 * @param userPassword
+	 * @param serverPbePassword
+	 * @throws IOException
+	 */
+	private static String cipherClientCryptoWithPBE(String multicastAddress, String userPassword, String serverPbePassword) throws IOException{
+		CipherConfiguration cipherConfig = null;
+		
+		try {
+			cipherConfig = new CipherConfiguration(CipherHandler.uncipherFileWithPBE(serverPbePassword, SERVER_FILES_PATH +  multicastAddress));
+		} 
+		catch (InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException
+				| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
+				| ClassNotFoundException e) {
+			System.out.println("Failed to parse the ciphersuite." + e.getMessage());
+		}
+		
+		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("database/" + multicastAddress + ".pbe");
+		
+		return CipherHandler.cipherFileContentWithPBE(userPassword, pbe, cipherConfig);
 	}
 
 	private static void printSocketInfo(SSLSocket s) {
