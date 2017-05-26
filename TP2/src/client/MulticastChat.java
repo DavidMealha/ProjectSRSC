@@ -11,6 +11,9 @@ import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 
+import security.CipherConfiguration;
+import security.PBEConfiguration;
+
 public class MulticastChat extends Thread {
 
 	// Identifica uma op. de JOIN ao chat multicast //
@@ -56,6 +59,26 @@ public class MulticastChat extends Thread {
 
 		// create & configure multicast socket
 		msocket = new MySecureMulticastSocket(port);
+		msocket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT_MILLIS);
+		msocket.setTimeToLive(ttl);
+		msocket.joinGroup(group);
+
+		// start receive thread and send multicast join message
+		start();
+		sendJoin();
+	}
+	
+	public MulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener,
+			CipherConfiguration cipherConfiguration, PBEConfiguration pbe)
+			throws IOException {
+
+		this.username = username;
+		this.group = group;
+		this.listener = listener;
+		isActive = true;
+
+		// create & configure multicast socket
+		msocket = new MySecureMulticastSocket(port, cipherConfiguration, pbe);
 		msocket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT_MILLIS);
 		msocket.setTimeToLive(ttl);
 		msocket.joinGroup(group);

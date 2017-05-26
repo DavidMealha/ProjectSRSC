@@ -27,6 +27,16 @@ public class CipherConfiguration implements Serializable {
 		this.macKeySize = cipherConfig.getMacKeySize();
 		this.macKeyValue = cipherConfig.getMacKeyValue();
 	}
+	
+	public CipherConfiguration(String crypto){
+		String[] keyvalues = crypto.split(" | ");
+		this.ciphersuite = keyvalues[1].trim();
+		this.keySize = Integer.parseInt(keyvalues[4].trim());
+		this.keyValue = keyvalues[7].trim();
+		this.macAlgorithm = keyvalues[10].trim();
+		this.macKeySize = Integer.parseInt(keyvalues[13].trim());
+		this.macKeyValue = keyvalues[16].trim();
+	}
 
 	public String getCiphersuite() {
 		return ciphersuite;

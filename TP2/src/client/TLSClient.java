@@ -15,7 +15,10 @@ import javax.net.ssl.*;
 
 import helpers.FileHandler;
 import helpers.TLSConfiguration;
+import security.CipherConfiguration;
+import security.CipherHandler;
 import security.DigestHandler;
+import security.PBEConfiguration;
 
 public class TLSClient {
 
@@ -34,6 +37,9 @@ public class TLSClient {
 	
 	private String serverAddress;
 	private int serverPort;
+	
+	private PBEConfiguration pbe;
+	private CipherConfiguration crypto;
 
 	public TLSClient(String username, String clearPassword, String multicastAddress, String clientKeyStorePassword, String clientEntryPassword, String serverAddress, int serverPort) {
 		this.username = username;
@@ -53,6 +59,30 @@ public class TLSClient {
 	
 	public boolean getAuthenticationSuccess(){
 		return this.authenticationResult;
+	}
+	
+	public void setPBEConfiguration(String pbe){
+		this.pbe = new PBEConfiguration(pbe);
+	}
+	
+	public void setCipherConfiguration(String crypto){
+		this.crypto = new CipherConfiguration(crypto);
+	}
+
+	public PBEConfiguration getPbe() {
+		return pbe;
+	}
+
+	public void setPbe(PBEConfiguration pbe) {
+		this.pbe = pbe;
+	}
+
+	public CipherConfiguration getCrypto() {
+		return crypto;
+	}
+
+	public void setCrypto(CipherConfiguration crypto) {
+		this.crypto = crypto;
 	}
 
 	/**
@@ -135,26 +165,24 @@ public class TLSClient {
 			w.flush();
 
 			String authenticationResult = r.readLine();
-			
-			String pbeConfig = r.readLine();
-			System.out.println(pbeConfig);
-			String cryptoContent = r.readLine();
-			System.out.println(cryptoContent);
-			
-			String m = "";
-			while ((m = r.readLine()) != null) {
-				System.out.println(m);
-				m = in.readLine();
-			}
-			
 			System.out.println(authenticationResult);
-			
+
 			if(authenticationResult.equals("true")){
 				this.authenticationResult = true;
+				
+				String pbeConfig = r.readLine();
+				System.out.println(pbeConfig);
+				this.setPBEConfiguration(pbeConfig);
+				
+				String cryptoContent = r.readLine();
+				System.out.println(cryptoContent);
+				String uncipheredCrypto = CipherHandler.uncipherFileContentWithPBE(hashedPassword, cryptoContent, pbe);
+				System.out.println(uncipheredCrypto);
+				this.setCipherConfiguration(uncipheredCrypto);
+				
+				//should or shouldn't add to filesystem the pbe and crypto?
 			}
-			//returns true if true
-			//Boolean.parseBoolean(authenticationResult);
-			
+
 			w.close();
 			r.close();
 			c.close();

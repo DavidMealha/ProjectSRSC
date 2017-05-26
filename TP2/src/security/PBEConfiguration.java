@@ -20,6 +20,13 @@ public class PBEConfiguration {
 		this.salt = salt;
 		this.counter = counter;
 	}
+	
+	public PBEConfiguration(String pbe){
+		String[] keyvalues = pbe.split(" | ");
+		this.algorithm = keyvalues[1].trim();
+		this.salt = keyvalues[4].trim();
+		this.counter = Integer.parseInt(keyvalues[7].trim());
+	}
 
 	public String getAlgorithm() {
 		return algorithm;

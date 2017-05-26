@@ -1,9 +1,32 @@
 package client;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import javax.swing.JOptionPane;
 
+import security.CipherConfiguration;
+import security.PBEConfiguration;
+
 public class MyMChatCliente extends MChatCliente {
+
+	private CipherConfiguration cipherConfiguration;
+	private PBEConfiguration pbe;
+	
+	public CipherConfiguration getCipherConfiguration() {
+		return cipherConfiguration;
+	}
+
+	public void setCipherConfiguration(CipherConfiguration cipherConfiguration) {
+		this.cipherConfiguration = cipherConfiguration;
+	}
+
+	public PBEConfiguration getPbe() {
+		return pbe;
+	}
+
+	public void setPbe(PBEConfiguration pbe) {
+		this.pbe = pbe;
+	}
 
 	/**
 	 * Command-line invocation expecting three argument
@@ -53,7 +76,7 @@ public class MyMChatCliente extends MChatCliente {
 		}
 
 		try {
-			MChatCliente frame = new MyMChatCliente();
+			MyMChatCliente frame = new MyMChatCliente();
 			
 			//ask for the password before showing the chat
 			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
@@ -63,24 +86,30 @@ public class MyMChatCliente extends MChatCliente {
 			tlsClient.run();
 			
 			if(tlsClient.getAuthenticationSuccess()){
-				System.err.println("Autenticação bem sucedida!");
+				System.out.println("Autenticação bem sucedida!");
+				frame.setCipherConfiguration(tlsClient.getCrypto());
+				frame.setPbe(tlsClient.getPbe());
+				
 				frame.setSize(800, 300);
 				frame.setVisible(true);
-				frame.join(username, group, port, ttl);
+				frame.join(username, group, port, ttl);				
 			}else{
 				System.err.println("Autenticação falhada!");
 				System.exit(1);
 			}
-			
-			
-			
-			
-			
 
 		} catch (Throwable e) {
 			e.printStackTrace();
 			System.err.println("Erro ao iniciar a frame: " + e.getClass().getName() + ": " + e.getMessage());
 			System.exit(1);
 		}
+	}
+	
+	@Override
+	public void join(String username, InetAddress group, int port, int ttl) throws IOException {
+		setTitle("CHAT MulticastIP " + username + "@" + group.getHostAddress() + ":" + port + " [TTL=" + ttl + "]");
+
+		// Criar sessao de chat multicast
+		chat = new MulticastChat(username, group, port, ttl, this, cipherConfiguration, pbe);
 	}
 }

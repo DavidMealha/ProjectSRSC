@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -238,7 +239,7 @@ public class CipherHandler {
 	 * @return
 	 */
 	public static String cipherFileContentWithPBE(String password, PBEConfiguration pbe,
-		CipherConfiguration cipherConfiguration) {
+			CipherConfiguration cipherConfiguration) {
 		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
 
 		try {
@@ -249,11 +250,10 @@ public class CipherHandler {
 			Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
 			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
 
-			byte[] cipheredFile = cipher.doFinal(cipherConfiguration.toSimpleStringFormat().getBytes());
-			
+			byte[] cipheredFile = cipher.doFinal(UtilsBase.stringToByteArray(cipherConfiguration.toSimpleStringFormat()));
+
 			return Utils.toHex(cipheredFile);
-		} 
-		catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException
+		} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException
 				| InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchPaddingException
 				| InvalidKeySpecException e) {
 			e.printStackTrace();
@@ -276,13 +276,11 @@ public class CipherHandler {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static CipherConfiguration uncipherFileWithPBE(String password, String path)
-			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
-			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException,
-			ClassNotFoundException {
+	public static CipherConfiguration uncipherFileWithPBE(String password, String path) throws NoSuchAlgorithmException,
+			InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException,
+			IllegalBlockSizeException, BadPaddingException, IOException, ClassNotFoundException {
 		// read the ciphered file, that is saved as a ciphered object in a whole
-		InputStream iStream = FileHandler
-				.readCiphersuiteFileEncrypted(path + CRYPTOEXTENSION);
+		InputStream iStream = FileHandler.readCiphersuiteFileEncrypted(path + CRYPTOEXTENSION);
 
 		PBEConfiguration pbe = FileHandler.readPBEncryptionFile(path + PBEEXTENSION);
 
@@ -307,5 +305,35 @@ public class CipherHandler {
 		SealedObject sealedObject;
 		sealedObject = (SealedObject) inputStream.readObject();
 		return (CipherConfiguration) sealedObject.getObject(cipher);
+	}
+
+	/**
+	 * 
+	 * @param password
+	 * @param content
+	 * @return
+	 */
+	public static String uncipherFileContentWithPBE(String password, String content, PBEConfiguration pbe) {
+		try {
+			PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(pbe.getAlgorithm());
+
+			SecretKey key = keyFactory.generateSecret(keySpec);
+			PBEParameterSpec paramSpec = new PBEParameterSpec(pbe.getSalt().getBytes(), pbe.getCounter());
+
+			Cipher cipher = Cipher.getInstance(pbe.getAlgorithm());
+
+			cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
+			byte[] uncipheredFile = cipher.doFinal(Utils.hexStringToByteArray(content));
+
+			System.out.println(Utils.toString(uncipheredFile, uncipheredFile.length));
+			
+			return Utils.toString(uncipheredFile, uncipheredFile.length);
+		} catch (InvalidKeyException | InvalidAlgorithmParameterException | NoSuchAlgorithmException
+				| InvalidKeySpecException | NoSuchPaddingException | IllegalBlockSizeException
+				| BadPaddingException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

@@ -39,23 +39,29 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	public MySecureMulticastSocket(int port) throws IOException {
 		super(port);
 	}
+	
+	public MySecureMulticastSocket(int port, CipherConfiguration cipherConfiguration, PBEConfiguration pbe) throws IOException{
+		super(port);
+		this.cipherConfiguration = cipherConfiguration;
+		this.pbe = pbe;
+	}
 
 	@Override
 	public void joinGroup(InetAddress group) throws IOException {
 		// get ip of multicast group
-		String pbeFilename = "configs/" + group.getHostAddress() + ".pbe";
-
-		// class with all the pbe configuration for the address
-		this.setPbe(FileHandler.readPBEncryptionFile(pbeFilename));
-
-		try {
-			this.setCipherConfiguration(CipherHandler.uncipherFileWithPBE("password", group.getHostAddress()));
-		} catch (InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException
-				| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
-				| ClassNotFoundException e) {
-			System.out.println("Failed to parse the ciphersuite." + e.getMessage());
-			// e.printStackTrace();
-		}
+//		String pbeFilename = "configs/" + group.getHostAddress() + ".pbe";
+//
+//		// class with all the pbe configuration for the address
+//		this.setPbe(FileHandler.readPBEncryptionFile(pbeFilename));
+//
+//		try {
+//			this.setCipherConfiguration(CipherHandler.uncipherFileWithPBE("password", group.getHostAddress()));
+//		} catch (InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException
+//				| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
+//				| ClassNotFoundException e) {
+//			System.out.println("Failed to parse the ciphersuite." + e.getMessage());
+//			// e.printStackTrace();
+//		}
 
 		super.joinGroup(group);
 	}
