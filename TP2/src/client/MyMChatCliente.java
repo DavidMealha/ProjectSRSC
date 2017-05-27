@@ -88,7 +88,7 @@ public class MyMChatCliente extends MChatCliente {
 			if(tlsClient.getAuthenticationSuccess()){
 				System.out.println("Autenticação bem sucedida!");
 				frame.setCipherConfiguration(tlsClient.getCrypto());
-				frame.setPbe(tlsClient.getPbe());
+				//frame.setPbe(tlsClient.getPbe());
 				
 				frame.setSize(800, 300);
 				frame.setVisible(true);
@@ -110,6 +110,6 @@ public class MyMChatCliente extends MChatCliente {
 		setTitle("CHAT MulticastIP " + username + "@" + group.getHostAddress() + ":" + port + " [TTL=" + ttl + "]");
 
 		// Criar sessao de chat multicast
-		chat = new MulticastChat(username, group, port, ttl, this, cipherConfiguration, pbe);
+		chat = new MulticastChat(username, group, port, ttl, this, cipherConfiguration);
 	}
 }

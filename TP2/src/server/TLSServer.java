@@ -126,9 +126,9 @@ public class TLSServer {
 				
 				if(authResult.equals("true")){
 					//write first the pbe config with the salt and counter
-					String pbe = FileHandler.readPBEncryptionFile(SERVER_FILES_PATH + multicastAddress + ".pbe").toString();
-					w.write(pbe, 0, pbe.length());
-					w.newLine();
+					//String pbe = FileHandler.readPBEncryptionFile(SERVER_FILES_PATH + multicastAddress + ".pbe").toString();
+					//w.write(pbe, 0, pbe.length());
+					//w.newLine();
 					
 					//write the configuration encrypted with the pbe config and user password
 					String crypto = cipherClientCryptoWithPBE(multicastAddress, hashedPwdReceived, serverPBEPassword);
@@ -194,9 +194,10 @@ public class TLSServer {
 			System.out.println("Failed to parse the ciphersuite." + e.getMessage());
 		}
 		
-		PBEConfiguration pbe = FileHandler.readPBEncryptionFile("database/" + multicastAddress + ".pbe");
+		//PBEConfiguration pbe = FileHandler.readPBEncryptionFile("database/" + multicastAddress + ".pbe");
 		
-		return CipherHandler.cipherFileContentWithPBE(userPassword, pbe, cipherConfig);
+		//return CipherHandler.cipherFileContentWithPBE(userPassword, pbe, cipherConfig);
+		return cipherConfig.toSimpleStringFormat();
 	}
 
 	private static void printSocketInfo(SSLSocket s) {

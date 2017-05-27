@@ -69,7 +69,7 @@ public class MulticastChat extends Thread {
 	}
 	
 	public MulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener,
-			CipherConfiguration cipherConfiguration, PBEConfiguration pbe)
+			CipherConfiguration cipherConfiguration)
 			throws IOException {
 
 		this.username = username;
@@ -78,7 +78,7 @@ public class MulticastChat extends Thread {
 		isActive = true;
 
 		// create & configure multicast socket
-		msocket = new MySecureMulticastSocket(port, cipherConfiguration, pbe);
+		msocket = new MySecureMulticastSocket(port, cipherConfiguration);
 		msocket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT_MILLIS);
 		msocket.setTimeToLive(ttl);
 		msocket.joinGroup(group);

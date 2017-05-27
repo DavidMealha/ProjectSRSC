@@ -170,15 +170,16 @@ public class TLSClient {
 			if(authenticationResult.equals("true")){
 				this.authenticationResult = true;
 				
-				String pbeConfig = r.readLine();
-				System.out.println(pbeConfig);
-				this.setPBEConfiguration(pbeConfig);
+				//String pbeConfig = r.readLine();
+				//System.out.println(pbeConfig);
+				//this.setPBEConfiguration(pbeConfig);
 				
-				String cryptoContent = r.readLine();
-				System.out.println(cryptoContent);
-				String uncipheredCrypto = CipherHandler.uncipherFileContentWithPBE(hashedPassword, cryptoContent, pbe);
-				System.out.println(uncipheredCrypto);
-				this.setCipherConfiguration(uncipheredCrypto);
+				String crypto = r.readLine();
+				System.out.println(crypto);
+				//String uncipheredCrypto = CipherHandler.uncipherFileContentWithPBE(hashedPassword, cryptoContent, pbe);
+				//System.out.println(uncipheredCrypto);
+				
+				this.setCipherConfiguration(crypto);
 				
 				//should or shouldn't add to filesystem the pbe and crypto?
 			}

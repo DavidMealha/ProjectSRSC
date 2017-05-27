@@ -40,10 +40,9 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		super(port);
 	}
 	
-	public MySecureMulticastSocket(int port, CipherConfiguration cipherConfiguration, PBEConfiguration pbe) throws IOException{
+	public MySecureMulticastSocket(int port, CipherConfiguration cipherConfiguration) throws IOException{
 		super(port);
 		this.cipherConfiguration = cipherConfiguration;
-		this.pbe = pbe;
 	}
 
 	@Override
