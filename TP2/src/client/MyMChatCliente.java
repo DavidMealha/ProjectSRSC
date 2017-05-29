@@ -110,6 +110,6 @@ public class MyMChatCliente extends MChatCliente {
 		setTitle("CHAT MulticastIP " + username + "@" + group.getHostAddress() + ":" + port + " [TTL=" + ttl + "]");
 
 		// Criar sessao de chat multicast
-		chat = new MulticastChat(username, group, port, ttl, this, cipherConfiguration);
+		chat = new MyMulticastChat(username, group, port, ttl, this, cipherConfiguration);
 	}
 }

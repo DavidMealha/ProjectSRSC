@@ -112,6 +112,7 @@ public class MulticastChat extends Thread {
 		dataStream.writeLong(CHAT_MAGIC_NUMBER);
 		dataStream.writeInt(JOIN);
 		dataStream.writeUTF(username);
+		dataStream.writeUTF("DH NUMBER SENT TO EVERYONE! 0404369823659816409");
 		dataStream.close();
 
 		byte[] data = byteStream.toByteArray();
@@ -169,7 +170,6 @@ public class MulticastChat extends Thread {
 		dataStream.writeInt(MESSAGE);
 		dataStream.writeUTF(username);
 		dataStream.writeUTF(message);
-		dataStream.writeUTF("DH STUFF");
 		dataStream.close();
 
 		byte[] data = byteStream.toByteArray();
@@ -182,8 +182,6 @@ public class MulticastChat extends Thread {
 	protected void processMessage(DataInputStream istream, InetAddress address, int port) throws IOException {
 		String username = istream.readUTF();
 		String message = istream.readUTF();
-		String dh = istream.readUTF();
-		message = message + dh;
 
 		try {
 			listener.chatMessageReceived(username, address, port, message);
