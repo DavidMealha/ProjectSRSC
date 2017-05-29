@@ -169,6 +169,7 @@ public class MulticastChat extends Thread {
 		dataStream.writeInt(MESSAGE);
 		dataStream.writeUTF(username);
 		dataStream.writeUTF(message);
+		dataStream.writeUTF("DH STUFF");
 		dataStream.close();
 
 		byte[] data = byteStream.toByteArray();
@@ -181,6 +182,8 @@ public class MulticastChat extends Thread {
 	protected void processMessage(DataInputStream istream, InetAddress address, int port) throws IOException {
 		String username = istream.readUTF();
 		String message = istream.readUTF();
+		String dh = istream.readUTF();
+		message = message + dh;
 
 		try {
 			listener.chatMessageReceived(username, address, port, message);

@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -22,6 +23,8 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
 
 import helpers.FileHandler;
+import helpers.Utils;
+import helpers.UtilsBase;
 import security.CipherConfiguration;
 import security.CipherHandler;
 import security.PBEConfiguration;
@@ -29,7 +32,6 @@ import security.PBEConfiguration;
 public class MySecureMulticastSocket extends MulticastSocket {
 
 	private CipherConfiguration cipherConfiguration;
-	private PBEConfiguration pbe;
 
 	// https://docs.oracle.com/javase/7/docs/api/java/net/MulticastSocket.html
 	public MySecureMulticastSocket() throws IOException {
@@ -69,6 +71,9 @@ public class MySecureMulticastSocket extends MulticastSocket {
 	public void send(DatagramPacket dgPacket) throws IOException {
 		// manipular o buffer que esta no data gram
 		byte[] buffer = dgPacket.getData();
+		
+		DataInputStream istream = new DataInputStream(
+				new ByteArrayInputStream(dgPacket.getData(), dgPacket.getOffset(), dgPacket.getLength()));
 
 		try {
 			buffer = CipherHandler.cipherText(buffer, this.cipherConfiguration);
@@ -77,6 +82,7 @@ public class MySecureMulticastSocket extends MulticastSocket {
 			| BadPaddingException | IllegalStateException e1) {
 			System.out.println("Failed to cipher message." + e1.getMessage());
 		}
+		
 		// after encrypting the buffer, it's time to finally set it
 		dgPacket.setData(buffer);
 
@@ -107,6 +113,7 @@ public class MySecureMulticastSocket extends MulticastSocket {
 			| BadPaddingException | IllegalStateException e) {
 			System.out.println("Failed to uncipher message." + e.getMessage());
 		}
+
 		//set the data of the packet with the unciphered buffer, changing by reference
 		dgPacket.setData(buffer);	
 	}
@@ -117,14 +124,6 @@ public class MySecureMulticastSocket extends MulticastSocket {
 
 	public void setCipherConfiguration(CipherConfiguration cipherConfiguration) {
 		this.cipherConfiguration = cipherConfiguration;
-	}
-
-	public PBEConfiguration getPbe() {
-		return pbe;
-	}
-
-	public void setPbe(PBEConfiguration pbe) {
-		this.pbe = pbe;
 	}
 
 }
