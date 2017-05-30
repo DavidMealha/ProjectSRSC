@@ -143,8 +143,8 @@ public class TLSServer {
 				c.close();
 				s.close();
 			} catch (Exception e) {
-				e.printStackTrace();
-				//System.err.println(e.toString());
+				//e.printStackTrace();
+				System.err.println(e.toString());
 			}
 			
 		}
