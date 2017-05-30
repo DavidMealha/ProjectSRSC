@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.DHParameterSpec;
 
+import diffiehellman.MyDigitalSignature;
 import diffiehellman.UtilsDH;
 import helpers.Utils;
 import security.CipherConfiguration;
@@ -34,15 +35,15 @@ public class MyMulticastChat extends MulticastChat{
     
     private ArrayList<String> publicKeys;
     
-    private CipherConfiguration cipherConfiguration;
-    
     private KeyPair myPair;
+    private MyDigitalSignature myDigitalSign;
     
 	public MyMulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener,
 			CipherConfiguration cipherConfiguration) throws IOException {
 		super(username, group, port, ttl, listener, cipherConfiguration);
 		
 		this.publicKeys = new ArrayList<String>();
+		this.myDigitalSign = new MyDigitalSignature();
 	}
 	
 	@Override
@@ -53,6 +54,7 @@ public class MyMulticastChat extends MulticastChat{
 		dataStream.writeLong(CHAT_MAGIC_NUMBER);
 		dataStream.writeInt(JOIN);
 		dataStream.writeUTF(username);
+		//cant send like this, need to sign it, and with it send the public key, so that the other user can check if its correct 
 		dataStream.writeUTF(Utils.toHex(generateDiffieHellman().getEncoded()));
 		dataStream.close();
 
@@ -67,6 +69,7 @@ public class MyMulticastChat extends MulticastChat{
 		String dhNumber = istream.readUTF();
 		byte[] pKey = Utils.hexStringToByteArray(dhNumber);
 		
+		//transform in a public key received, because it was in a string format
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("DH", "BC");	
 		    EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pKey);
@@ -76,9 +79,7 @@ public class MyMulticastChat extends MulticastChat{
 			e.printStackTrace();
 		}
 		
-		listener.chatMessageReceived(this.username, this.group, this.msocket.getLocalPort(), "HERE IS MY DH PUBLIC NUMBER; NOW THAT I HAVE RECEIVED FROM THE USER THAT JOINED");
-	    
-		System.out.println(dhNumber);
+		//listener.chatMessageReceived(this.username, this.group, this.msocket.getLocalPort(), "HERE IS MY DH PUBLIC NUMBER; NOW THAT I HAVE RECEIVED FROM THE USER THAT JOINED");
 	}
 
 	/**
