@@ -10,7 +10,6 @@ import security.PBEConfiguration;
 public class MyMChatCliente extends MChatCliente {
 
 	private CipherConfiguration cipherConfiguration;
-	private PBEConfiguration pbe;
 	
 	public CipherConfiguration getCipherConfiguration() {
 		return cipherConfiguration;
@@ -18,14 +17,6 @@ public class MyMChatCliente extends MChatCliente {
 
 	public void setCipherConfiguration(CipherConfiguration cipherConfiguration) {
 		this.cipherConfiguration = cipherConfiguration;
-	}
-
-	public PBEConfiguration getPbe() {
-		return pbe;
-	}
-
-	public void setPbe(PBEConfiguration pbe) {
-		this.pbe = pbe;
 	}
 
 	/**
@@ -87,12 +78,12 @@ public class MyMChatCliente extends MChatCliente {
 			
 			if(tlsClient.getAuthenticationSuccess()){
 				System.out.println("Autenticação bem sucedida!");
-				frame.setCipherConfiguration(tlsClient.getCrypto());
+				//frame.setCipherConfiguration(tlsClient.getCrypto());
 				//frame.setPbe(tlsClient.getPbe());
 				
 				frame.setSize(800, 300);
 				frame.setVisible(true);
-				frame.join(username, group, port, ttl);				
+				frame.join(username, group, port, ttl, tlsClient.getCrypto());				
 			}else{
 				System.err.println("Autenticação falhada!");
 				System.exit(1);
@@ -105,8 +96,7 @@ public class MyMChatCliente extends MChatCliente {
 		}
 	}
 	
-	@Override
-	public void join(String username, InetAddress group, int port, int ttl) throws IOException {
+	public void join(String username, InetAddress group, int port, int ttl, CipherConfiguration cipherConfiguration) throws IOException {
 		setTitle("CHAT MulticastIP " + username + "@" + group.getHostAddress() + ":" + port + " [TTL=" + ttl + "]");
 
 		// Criar sessao de chat multicast

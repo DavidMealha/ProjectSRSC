@@ -146,7 +146,7 @@ public class TLSClient {
 			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));
 			
-			System.out.println(this.hashedPassword);
+//			System.out.println(this.hashedPassword);
 			System.out.println(r.readLine());
 			
 			// write username
@@ -165,7 +165,6 @@ public class TLSClient {
 			w.flush();
 
 			String authenticationResult = r.readLine();
-			System.out.println(authenticationResult);
 
 			if(authenticationResult.equals("true")){
 				this.authenticationResult = true;
@@ -175,7 +174,6 @@ public class TLSClient {
 				//this.setPBEConfiguration(pbeConfig);
 				
 				String crypto = r.readLine();
-				System.out.println(crypto);
 				//String uncipheredCrypto = CipherHandler.uncipherFileContentWithPBE(hashedPassword, cryptoContent, pbe);
 				//System.out.println(uncipheredCrypto);
 				
