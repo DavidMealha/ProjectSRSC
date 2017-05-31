@@ -46,7 +46,6 @@ public class TLSServer {
 				System.setProperty("javax.net.ssl.trustStore", CERTIFICATES_PATH + tlsConfig.getTruststoreFilename());
 				System.setProperty("javax.net.ssl.trustStorePassword", "clientTrustedStore");
 				
-		
 				char[] keystorePassword = args[0].toCharArray(); // password da keystore
 				char[] entryPassword = args[1].toCharArray(); // password entry
 				int port = Integer.parseInt(args[3]); //port
@@ -101,7 +100,6 @@ public class TLSServer {
 		
 				BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 				BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));
-		
 				
 				// Service from this server ...
 				String m = "Welcome!";
@@ -125,12 +123,6 @@ public class TLSServer {
 				w.flush();
 				
 				if(authResult.equals("true")){
-					//write first the pbe config with the salt and counter
-					//String pbe = FileHandler.readPBEncryptionFile(SERVER_FILES_PATH + multicastAddress + ".pbe").toString();
-					//w.write(pbe, 0, pbe.length());
-					//w.newLine();
-					
-					//write the configuration encrypted with the pbe config and user password
 					String crypto = cipherClientCryptoWithPBE(multicastAddress, hashedPwdReceived, serverPBEPassword);
 					w.write(crypto, 0, crypto.length());
 					w.newLine();
@@ -145,8 +137,8 @@ public class TLSServer {
 			} catch (Exception e) {
 				//e.printStackTrace();
 				System.err.println(e.toString());
+				System.exit(0);
 			}
-			
 		}
 	}
 	
@@ -193,10 +185,7 @@ public class TLSServer {
 				| ClassNotFoundException e) {
 			System.out.println("Failed to parse the ciphersuite." + e.getMessage());
 		}
-		
-		//PBEConfiguration pbe = FileHandler.readPBEncryptionFile("database/" + multicastAddress + ".pbe");
-		
-		//return CipherHandler.cipherFileContentWithPBE(userPassword, pbe, cipherConfig);
+
 		return cipherConfig.toSimpleStringFormat();
 	}
 

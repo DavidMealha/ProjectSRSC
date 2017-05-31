@@ -106,11 +106,7 @@ public class TLSClient {
 		
 		try {
 
-			if (tlsConfig.getAuthenticationType().equals("SERVIDOR")) 
-			{
-				//might not be needed...
-			} 
-			else if(tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR") || 
+			if(tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR") || 
 					tlsConfig.getAuthenticationType().equals("CLIENTE"))
 			{
 				// se o cliente tambem tem de se autenticar, vai ter de obter a
@@ -134,8 +130,8 @@ public class TLSClient {
 			
 			c = (SSLSocket) f.createSocket("localhost", 4443);
 			
-			c.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
-			c.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
+			//c.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
+			//c.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
 		
 			if(tlsConfig.getAuthenticationType().equals("CLIENTE")){
 				c.setUseClientMode(false);
@@ -168,18 +164,8 @@ public class TLSClient {
 
 			if(authenticationResult.equals("true")){
 				this.authenticationResult = true;
-				
-				//String pbeConfig = r.readLine();
-				//System.out.println(pbeConfig);
-				//this.setPBEConfiguration(pbeConfig);
-				
 				String crypto = r.readLine();
-				//String uncipheredCrypto = CipherHandler.uncipherFileContentWithPBE(hashedPassword, cryptoContent, pbe);
-				//System.out.println(uncipheredCrypto);
-				
 				this.setCipherConfiguration(crypto);
-				
-				//should or shouldn't add to filesystem the pbe and crypto?
 			}
 
 			w.close();
