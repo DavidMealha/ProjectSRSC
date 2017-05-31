@@ -112,7 +112,7 @@ public class TLSClient {
 				// se o cliente tambem tem de se autenticar, vai ter de obter a
 				// keystore, tal como o servidor, por isso é que recebe a keystore password
 				try {
-					ctx = SSLContext.getInstance(tlsConfig.getVersion(), "BC");
+					ctx = SSLContext.getInstance(tlsConfig.getVersion());
 					
 					ks = KeyStore.getInstance("JKS");
 					ks.load(new FileInputStream(CERTIFICATES_PATH + tlsConfig.getPrivateKeyStoreFilename() + KEYSTORE_EXTENSION), this.clientKeyStorePassword);
@@ -124,7 +124,7 @@ public class TLSClient {
 					f = ctx.getSocketFactory();
 					
 				} catch (NoSuchAlgorithmException | CertificateException | KeyStoreException | UnrecoverableKeyException
-						| KeyManagementException | NoSuchProviderException e) {
+						| KeyManagementException e) {
 					e.printStackTrace();
 				}
 			}
