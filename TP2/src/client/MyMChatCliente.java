@@ -78,8 +78,6 @@ public class MyMChatCliente extends MChatCliente {
 			
 			if(tlsClient.getAuthenticationSuccess()){
 				System.out.println("Autenticação bem sucedida!");
-				//frame.setCipherConfiguration(tlsClient.getCrypto());
-				//frame.setPbe(tlsClient.getPbe());
 				
 				frame.setSize(800, 300);
 				frame.setVisible(true);

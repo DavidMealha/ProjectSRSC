@@ -1,3 +1,7 @@
+=============================================
+==== GEN CERTIFICATE RSA SIGNED BY CA =======
+=============================================
+
 # Gerar chave rsa
 
 openssl genrsa -out server.key 2048
@@ -27,6 +31,45 @@ keytool -importkeystore -deststorepass server -destkeypass server -destkeystore 
 # Converter certificado .crt para .pem
 
 openssl x509 -in server.crt -out server.pem -outform PEM
+
+=============================================
+==== GEN CERTIFICATE DSA SIGNED BY CA =======
+=============================================
+
+# Gerar pem com dsa de 2048 bits
+
+openssl dsaparam -genkey 2048 -out serverDSA.pem
+
+# Convert pem to csr
+
+openssl req -out serverDSA.csr -keyout serverDSA.key -newkey dsa:serverDSA.pem -sha256
+
+pwd = server
+pwd = aliceClient
+pwd = bobClient
+
+# Sign csr with CA certificate
+
+openssl x509 -req -days 365 -in serverDSA.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out serverDSA.crt
+
+pwd = server
+
+# Exportar .crt e .key para .p12, para mais tarde gerar a .keystore
+
+openssl pkcs12 -export -in serverDSA.crt -inkey serverDSA.key -out serverDSA.p12 -name serverDSA -CAfile ca.crt -caname root
+
+pwd = server
+pwd = aliceClient
+pwd = bobClient
+
+# Converter .p12 para .keystore, usando a mesma keystore de onde está a key RSA
+
+keytool -importkeystore -deststorepass server -destkeypass server -destkeystore server.keystore -srckeystore serverDSA.p12 -srcstoretype PKCS12 -srcstorepass server -alias serverDSA
+
+
+=============================================
+==== ADD CERTIFICATE TO TRUSTSTORE ==========
+=============================================
 
 #Importar o certificado para uma trusted store
 
