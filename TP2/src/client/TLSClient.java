@@ -143,7 +143,6 @@ public class TLSClient {
 			BufferedWriter w = new BufferedWriter(new OutputStreamWriter(c.getOutputStream()));
 			BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream()));
 			
-//			System.out.println(this.hashedPassword);
 			System.out.println(r.readLine());
 			
 			// write username

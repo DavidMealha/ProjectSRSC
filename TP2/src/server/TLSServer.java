@@ -63,9 +63,13 @@ public class TLSServer {
 		
 					KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 					kmf.init(ks, entryPassword);
+					
+					//create trust manager
+					//TrustManager[] trustedCerts = new TrustManager[] {new InsecureTrustManager()};
 		
 					//get the version from the config file
 					SSLContext sc = SSLContext.getInstance(tlsConfig.getVersion());
+					//sc.init(kmf.getKeyManagers(), trustedCerts, null);
 					sc.init(kmf.getKeyManagers(), null, null);
 					
 					SSLServerSocketFactory ssf = sc.getServerSocketFactory();

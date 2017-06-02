@@ -8,6 +8,7 @@ import java.security.Signature;
 import java.util.HashMap;
 
 import helpers.FileHandler;
+import helpers.Utils;
 
 public class MyDigitalSignature {
 
@@ -27,24 +28,27 @@ public class MyDigitalSignature {
 		this.signatureAlgorithm = fileContent.get("SIGNALG");
 	}
 	
-	public byte[] signContent(String content) throws Exception{
+	/**
+	 * 
+	 * @param content
+	 * @return
+	 * @throws Exception
+	 */
+	public String signContent(byte[] content) throws Exception{
 		
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance(this.keyAlgorithm, "BC");
         keyGen.initialize(this.keySize, new SecureRandom());
         
         this.myPair = keyGen.generateKeyPair();
         
-        Signature           signature = Signature.getInstance(this.signatureAlgorithm, "BC");
-
+        Signature signature = Signature.getInstance(this.signatureAlgorithm, "BC");
         signature.initSign(this.myPair.getPrivate(), UtilsDH.createFixedRandom());
-        signature.update(content.getBytes());
+        signature.update(content);
         
-        byte[] signedContent = signature.sign();
-        
-        return signedContent;
+        return Utils.toHex(signature.sign());
 	}
 
-	public PublicKey getMyPair() {
+	public PublicKey getMyPublic() {
 		return myPair.getPublic();
 	}
 	

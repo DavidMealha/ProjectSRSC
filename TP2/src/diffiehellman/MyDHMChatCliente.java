@@ -1,14 +1,15 @@
-package client;
+package diffiehellman;
 
 import java.io.IOException;
 import java.net.InetAddress;
+
 import javax.swing.JOptionPane;
 
+import client.MyMChatCliente;
+import client.TLSClient;
 import security.CipherConfiguration;
-import security.PBEConfiguration;
 
-public class MyMChatCliente extends MChatCliente {
-
+public class MyDHMChatCliente extends MyMChatCliente{
 	/**
 	 * Command-line invocation expecting three argument
 	 * @param args
@@ -88,6 +89,7 @@ public class MyMChatCliente extends MChatCliente {
 		setTitle("CHAT MulticastIP " + username + "@" + group.getHostAddress() + ":" + port + " [TTL=" + ttl + "]");
 
 		// Criar sessao de chat multicast
-		chat = new MulticastChat(username, group, port, ttl, this, cipherConfiguration);
+		chat = new MyMulticastChat(username, group, port, ttl, this, cipherConfiguration);
 	}
+
 }

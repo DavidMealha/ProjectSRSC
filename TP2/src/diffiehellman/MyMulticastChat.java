@@ -1,4 +1,4 @@
-package client;
+package diffiehellman;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.DHParameterSpec;
 
-import diffiehellman.MyDigitalSignature;
-import diffiehellman.UtilsDH;
+import client.MulticastChat;
+import client.MulticastChatEventListener;
 import helpers.Utils;
 import security.CipherConfiguration;
 
@@ -33,19 +33,24 @@ public class MyMulticastChat extends MulticastChat{
 	private static BigInteger g512 = new BigInteger("153d5d6172adb43045b68ae8e1de1070b6137005686d29d3d73a7749199681ee5b212c9b96bfdcfa5b20cd5e3fd2044895d609cf9b410b7a0f12ca1cb9a428cc", 16);
     private static BigInteger p512 = new BigInteger("9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd38744d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94bf0573bf047a3aca98cdf3b", 16);
     
-    private ArrayList<String> publicKeys;
+    private ArrayList<PublicKey> publicKeys;
     
-    private KeyPair myPair;
+    private KeyPair myDHPair;
     private MyDigitalSignature myDigitalSign;
     
 	public MyMulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener,
 			CipherConfiguration cipherConfiguration) throws IOException {
 		super(username, group, port, ttl, listener, cipherConfiguration);
 		
-		this.publicKeys = new ArrayList<String>();
+		this.publicKeys = new ArrayList<PublicKey>();
 		this.myDigitalSign = new MyDigitalSignature();
+		
+		generateDiffieHellman();
 	}
 	
+	/**
+	 * Handler to send information when a user joins the chat
+	 */
 	@Override
 	protected void sendJoin() throws IOException {
 		ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -54,8 +59,18 @@ public class MyMulticastChat extends MulticastChat{
 		dataStream.writeLong(CHAT_MAGIC_NUMBER);
 		dataStream.writeInt(JOIN);
 		dataStream.writeUTF(username);
-		//cant send like this, need to sign it, and with it send the public key, so that the other user can check if its correct 
-		dataStream.writeUTF(Utils.toHex(generateDiffieHellman().getEncoded()));
+		
+		//signed the public key for D
+		String signedDHpubKey = "";
+		try {
+			signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		dataStream.writeUTF(signedDHpubKey);
+		
+		//also needs to send the public key of the signature, 
+		//so the other party can check the signature
 		dataStream.close();
 
 		byte[] data = byteStream.toByteArray();
@@ -63,6 +78,9 @@ public class MyMulticastChat extends MulticastChat{
 		msocket.send(packet);
 	}
 	
+	/**
+	 * Handler to process the join message received, with the DH parameters
+	 */
 	@Override
 	protected void processJoin(DataInputStream istream, InetAddress address, int port) throws IOException {
 		super.processJoin(istream, address, port);
@@ -73,20 +91,21 @@ public class MyMulticastChat extends MulticastChat{
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("DH", "BC");	
 		    EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pKey);
-			PublicKey publicKey2 = keyFactory.generatePublic(publicKeySpec);
+			PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+			
+			//adds the public key received to its list 
+			publicKeys.add(publicKey);
 			
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException e) {
 			e.printStackTrace();
 		}
-		
-		//listener.chatMessageReceived(this.username, this.group, this.msocket.getLocalPort(), "HERE IS MY DH PUBLIC NUMBER; NOW THAT I HAVE RECEIVED FROM THE USER THAT JOINED");
 	}
 
 	/**
-	 * 
+	 * Generate a Diffie-Hellman KeyPair for the user
 	 * @return
 	 */
-	private PublicKey generateDiffieHellman(){
+	private void generateDiffieHellman(){
 		DHParameterSpec  dhParams = new DHParameterSpec(p512, g512);
 		
 		try {
@@ -96,16 +115,13 @@ public class MyMulticastChat extends MulticastChat{
 			KeyAgreement myKeyAgree = KeyAgreement.getInstance("DH", "BC");
 	        KeyPair      myPair = keyGen.generateKeyPair();
 	        
-	        this.myPair = myPair;
-	        
+	        this.myDHPair = myPair;
 	        myKeyAgree.init(myPair.getPrivate());
 	        
-	        return myPair.getPublic();
 		} catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException
 				| InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		return null;
 	}
 
 }
