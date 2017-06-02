@@ -58,7 +58,7 @@ public class MyDHMChatCliente extends MyMChatCliente{
 		}
 
 		try {
-			MyMChatCliente frame = new MyMChatCliente();
+			MyDHMChatCliente frame = new MyDHMChatCliente();
 			
 			//ask for the password before showing the chat
 			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);

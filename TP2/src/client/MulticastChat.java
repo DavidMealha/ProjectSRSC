@@ -87,6 +87,13 @@ public class MulticastChat extends Thread {
 		start();
 		sendJoin();
 	}
+	
+	public MulticastChat(String username, InetAddress group, int ttl, MulticastChatEventListener listener) throws IOException {
+		this.username = username;
+		this.group = group;
+		this.listener = listener;
+		isActive = true;
+	}
 
 	/**
 	 * Request de terminacao assincrona da thread de execucao, e envio de uma
@@ -112,7 +119,6 @@ public class MulticastChat extends Thread {
 		dataStream.writeLong(CHAT_MAGIC_NUMBER);
 		dataStream.writeInt(JOIN);
 		dataStream.writeUTF(username);
-		dataStream.writeUTF("DH NUMBER SENT TO EVERYONE! 0404369823659816409");
 		dataStream.close();
 
 		byte[] data = byteStream.toByteArray();

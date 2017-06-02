@@ -48,8 +48,8 @@ public class MyDigitalSignature {
         return Utils.toHex(signature.sign());
 	}
 
-	public PublicKey getMyPublic() {
-		return myPair.getPublic();
+	public String getMyPublicKeyHex() {
+		return Utils.toHex(myPair.getPublic().getEncoded());
 	}
 	
 }
