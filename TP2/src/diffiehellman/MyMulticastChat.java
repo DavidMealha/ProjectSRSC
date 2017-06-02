@@ -77,22 +77,28 @@ public class MyMulticastChat extends MulticastChat {
 		dataStream.writeInt(JOIN);
 		dataStream.writeUTF(username);
 
-		// signed the public key for Diffie-Hellman
 		try {
-			String signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
+			// signed the public key for Diffie-Hellman
+			byte[] signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
 			
 			System.out.println("DH PUBLIC KEY BEFORE SIGNING: " + Utils.toHex(this.myDHPair.getPublic().getEncoded()));
-			System.out.println("DH PUBLIC KEY AFTER SIGNING: " + signedDHpubKey);
-			dataStream.writeUTF(signedDHpubKey);
+			System.out.println("DH PUBLIC KEY AFTER SIGNING: " + Utils.toHex(signedDHpubKey));
+			
+			dataStream.writeUTF("" + signedDHpubKey.length);
+			
+			dataStream.write(signedDHpubKey);
+			System.out.println("send" + signedDHpubKey.toString());
+			
+			// also needs to send the public key of the signature,
+			// so the other party can check the signature	
+			dataStream.writeUTF("" + myDigitalSign.getMyPublicKey().length);
+			dataStream.write(myDigitalSign.getMyPublicKey());
+			
+			System.out.println("PUBLIC KEY: " + Utils.toHex(myDigitalSign.getMyPublicKey()));
+			
 		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
-
-		// also needs to send the public key of the signature,
-		// so the other party can check the signature
-		dataStream.writeUTF(myDigitalSign.getMyPublicKeyHex());
-		
-		System.out.println("SIGNATURE PUBLIC KEY: " + myDigitalSign.getMyPublicKeyHex());
 
 		dataStream.close();
 
@@ -107,19 +113,30 @@ public class MyMulticastChat extends MulticastChat {
 	@Override
 	protected void processJoin(DataInputStream istream, InetAddress address, int port) throws IOException {
 		super.processJoin(istream, address, port);
-		String hexSignedContent = istream.readUTF();
-		String sigPubKey = istream.readUTF();
-
-		System.out.println("RECEIVED SIGNATURE PUBLIC KEY: " + sigPubKey);
-		System.out.println("RECEIVED DH PUBLIC KEY SIGNED: " + hexSignedContent);
 		
-		String a = getDHPublicKey(hexSignedContent, sigPubKey);
+		//read the signed DH public key
+		int signatureSize = Integer.parseInt(istream.readUTF());
 		
-		System.out.println("RECEIVED DH PUBLIC KEY UNSIGNED: " + a);
+		byte[] signedDHPubKey = new byte[signatureSize];
+		istream.read(signedDHPubKey);
 		
-
-		// byte[] pKey = Utils.hexStringToByteArray(dhNumber);
-
+		System.out.println("SIGNED DH PUBLIC KEY IN RECEIVE: " + Utils.toHex(signedDHPubKey));
+		
+		//read the signature public key
+		int signaturePubKeySize = Integer.parseInt(istream.readUTF());
+		
+		byte[] signaturePubKey = new byte[signaturePubKeySize];
+		istream.read(signaturePubKey);
+		System.out.println("process" + signedDHPubKey.toString());
+		System.out.println("PUBLIC KEY IN RECEIVE: " + Utils.toHex(signaturePubKey));
+		
+		//convert to PublicKey
+		PublicKey sigpk = convertPubKeyByteToPublicKey(signaturePubKey);
+		
+		//finally, get the DH Public Key
+		PublicKey publicDHkey = getDHPublicKey(signedDHPubKey, sigpk);
+		
+		System.out.println(Utils.toHex(publicDHkey.getEncoded()));
 		// transform in a public key received, because it was in a string format
 		// adds the public key received to its list
 		// publicKeys.add(publicKey);
@@ -155,32 +172,28 @@ public class MyMulticastChat extends MulticastChat {
 	 * @param sigPubKeyHex
 	 * @return
 	 */
-	private String getDHPublicKey(String hexSignedContent, String sigPubKeyHex) {
-		byte[] signedContent = Utils.hexStringToByteArray(hexSignedContent);
-		PublicKey sigPubKey = convertPubKeyHexToPublicKey(sigPubKeyHex);
-		
+	private PublicKey getDHPublicKey(byte[] signedContent, PublicKey sigPubKey) {
 		try {
-			verifySignedContent(signedContent, sigPubKey);
+			if(verifySignedContent(signedContent, sigPubKey)){
+				return convertPubKeyByteToPublicKey(signedContent);
+			}
 		} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
 			e.printStackTrace();
 		}
-		
-		String unsignedDHKey = Utils.toHex(signedContent);
-
-		return unsignedDHKey;
+		return null;
 	}
 
 	/**
-	 * Auxiliar method to convert the enconded public key hex into a PublicKey
+	 * Auxiliar method to convert the enconded public key byte array into a PublicKey
 	 * object.
 	 * 
 	 * @param pubKeyHex
 	 * @return
 	 */
-	private PublicKey convertPubKeyHexToPublicKey(String pubKeyHex) {
+	private PublicKey convertPubKeyByteToPublicKey(byte[] pubKeyHex) {
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("DH", "BC");
-			EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pubKeyHex.getBytes());
+			EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pubKeyHex);
 
 			return keyFactory.generatePublic(publicKeySpec);
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException e) {
@@ -200,8 +213,6 @@ public class MyMulticastChat extends MulticastChat {
 	 */
 	private boolean verifySignedContent(byte[] signedContent, PublicKey sigPubKey)
 			throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-		
-		MyDigitalSignature tempSignature = new MyDigitalSignature();
 
 		Signature sig = Signature.getInstance("SHA1withDSA");
 		sig.initVerify(sigPubKey);

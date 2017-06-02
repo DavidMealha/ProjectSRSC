@@ -34,7 +34,7 @@ public class MyDigitalSignature {
 	 * @return
 	 * @throws Exception
 	 */
-	public String signContent(byte[] content) throws Exception{
+	public byte[] signContent(byte[] content) throws Exception{
 		
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance(this.keyAlgorithm, "BC");
         keyGen.initialize(this.keySize, new SecureRandom());
@@ -45,11 +45,11 @@ public class MyDigitalSignature {
         signature.initSign(this.myPair.getPrivate(), UtilsDH.createFixedRandom());
         signature.update(content);
         
-        return Utils.toHex(signature.sign());
+        return signature.sign();
 	}
 
-	public String getMyPublicKeyHex() {
-		return Utils.toHex(myPair.getPublic().getEncoded());
+	public byte[] getMyPublicKey() {
+		return myPair.getPublic().getEncoded();
 	}
 	
 }
