@@ -19,6 +19,7 @@ import security.CipherConfiguration;
 import security.CipherHandler;
 import security.DigestHandler;
 import security.PBEConfiguration;
+import server.InsecureTrustManager;
 
 public class TLSClient {
 
@@ -104,6 +105,9 @@ public class TLSClient {
 		KeyManagerFactory kmf;
 		KeyStore ks;
 		
+		//create trust manager
+		TrustManager[] trustedCerts = new TrustManager[] {new InsecureTrustManager()};
+		
 		try {
 
 			if(tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR") || 
@@ -120,11 +124,20 @@ public class TLSClient {
 					kmf = KeyManagerFactory.getInstance("SunX509");
 					kmf.init(ks, this.clientEntryPassword);
 					
-					ctx.init(kmf.getKeyManagers(), null, null);
+					ctx.init(kmf.getKeyManagers(), trustedCerts, null);
 					f = ctx.getSocketFactory();
 					
 				} catch (NoSuchAlgorithmException | CertificateException | KeyStoreException | UnrecoverableKeyException
 						| KeyManagementException e) {
+					e.printStackTrace();
+				}
+			}else{
+				try {
+					ctx = SSLContext.getInstance(tlsConfig.getVersion());
+					
+					ctx.init(null, trustedCerts, null);
+					f = ctx.getSocketFactory();
+				} catch (KeyManagementException | NoSuchAlgorithmException e) {
 					e.printStackTrace();
 				}
 			}

@@ -39,6 +39,9 @@ public class TLSServer {
 		
 		while(true){
 
+			//create trust manager
+			TrustManager[] trustedCerts = new TrustManager[] {new InsecureTrustManager()};
+			
 			try {
 				// read the tls configuration file
 				TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(SERVER_FILES_PATH + SERVER_TLS_CONFIGURATION);
@@ -64,13 +67,10 @@ public class TLSServer {
 					KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 					kmf.init(ks, entryPassword);
 					
-					//create trust manager
-					//TrustManager[] trustedCerts = new TrustManager[] {new InsecureTrustManager()};
-		
 					//get the version from the config file
 					SSLContext sc = SSLContext.getInstance(tlsConfig.getVersion());
-					//sc.init(kmf.getKeyManagers(), trustedCerts, null);
-					sc.init(kmf.getKeyManagers(), null, null);
+					sc.init(kmf.getKeyManagers(), trustedCerts, null);
+					//sc.init(kmf.getKeyManagers(), null, null);
 					
 					SSLServerSocketFactory ssf = sc.getServerSocketFactory();
 					s = (SSLServerSocket) ssf.createServerSocket(port);
@@ -89,7 +89,7 @@ public class TLSServer {
 				else 
 				{
 					SSLContext sc = SSLContext.getInstance(tlsConfig.getVersion());
-					sc.init(null, null, null);
+					sc.init(null, trustedCerts, null);
 					
 					SSLServerSocketFactory ssf = sc.getServerSocketFactory();
 					s = (SSLServerSocket) ssf.createServerSocket(port);
