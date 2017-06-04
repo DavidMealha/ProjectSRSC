@@ -21,6 +21,8 @@ import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Base64.Encoder;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.DHParameterSpec;
@@ -44,6 +46,7 @@ public class MyMulticastChat extends MulticastChat {
 
 	private KeyPair myDHPair;
 	private MyDigitalSignature myDigitalSign;
+	private KeyAgreement myKeyAgreement;
 
 	public MyMulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener,
 			CipherConfiguration cipherConfiguration) throws IOException {
@@ -79,20 +82,22 @@ public class MyMulticastChat extends MulticastChat {
 
 		try {
 			// signed the public key for Diffie-Hellman
-			byte[] signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
+			byte[] encodedPublicKey = Base64.getEncoder().encode(this.myDHPair.getPublic().getEncoded());
+			
+			byte[] signedDHpubKey = myDigitalSign.signContent(encodedPublicKey);
 			
 			System.out.println("DH PUBLIC KEY BEFORE SIGNING: " + Utils.toHex(this.myDHPair.getPublic().getEncoded()));
 			System.out.println("DH PUBLIC KEY AFTER SIGNING: " + Utils.toHex(signedDHpubKey));
 			
 			dataStream.writeUTF("" + signedDHpubKey.length);
-			
 			dataStream.write(signedDHpubKey);
 			System.out.println("send" + signedDHpubKey.toString());
 			
 			// also needs to send the public key of the signature,
 			// so the other party can check the signature	
 			dataStream.writeUTF("" + myDigitalSign.getMyPublicKey().length);
-			dataStream.write(myDigitalSign.getMyPublicKey());
+			byte[] encodedDigitalSig = Base64.getEncoder().encode(myDigitalSign.getMyPublicKey());
+			dataStream.write(encodedDigitalSig);
 			
 			System.out.println("PUBLIC KEY: " + Utils.toHex(myDigitalSign.getMyPublicKey()));
 			
@@ -116,25 +121,27 @@ public class MyMulticastChat extends MulticastChat {
 		
 		//read the signed DH public key
 		int signatureSize = Integer.parseInt(istream.readUTF());
-		
+		System.out.println("--------->" + signatureSize);
 		byte[] signedDHPubKey = new byte[signatureSize];
 		istream.read(signedDHPubKey);
 		
-		System.out.println("SIGNED DH PUBLIC KEY IN RECEIVE: " + Utils.toHex(signedDHPubKey));
+		byte[] decodedSignedDHPubKey = Base64.getDecoder().decode(signedDHPubKey);
+		System.out.println("SIGNED DH PUBLIC KEY IN RECEIVE: " + Utils.toHex(decodedSignedDHPubKey));
 		
 		//read the signature public key
 		int signaturePubKeySize = Integer.parseInt(istream.readUTF());
 		
 		byte[] signaturePubKey = new byte[signaturePubKeySize];
 		istream.read(signaturePubKey);
-		System.out.println("process" + signedDHPubKey.toString());
-		System.out.println("PUBLIC KEY IN RECEIVE: " + Utils.toHex(signaturePubKey));
+		byte[] decodedSignaturePubKey = Base64.getDecoder().decode(signaturePubKey);
+		System.out.println("process" + decodedSignedDHPubKey.toString());
+		System.out.println("PUBLIC KEY IN RECEIVE: " + Utils.toHex(decodedSignaturePubKey));
 		
 		//convert to PublicKey
-		PublicKey sigpk = convertPubKeyByteToPublicKey(signaturePubKey);
+		PublicKey sigpk = convertPubKeyByteToPublicKey(decodedSignaturePubKey);
 		
 		//finally, get the DH Public Key
-		PublicKey publicDHkey = getDHPublicKey(signedDHPubKey, sigpk);
+		PublicKey publicDHkey = getDHPublicKey(decodedSignedDHPubKey, sigpk);
 		
 		System.out.println(Utils.toHex(publicDHkey.getEncoded()));
 		// transform in a public key received, because it was in a string format
@@ -154,11 +161,11 @@ public class MyMulticastChat extends MulticastChat {
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "BC");
 			keyGen.initialize(dhParams, UtilsDH.createFixedRandom());
 
-			KeyAgreement myKeyAgree = KeyAgreement.getInstance("DH", "BC");
+			this.myKeyAgreement = KeyAgreement.getInstance("DH", "BC");
 			KeyPair myPair = keyGen.generateKeyPair();
 
 			this.myDHPair = myPair;
-			myKeyAgree.init(myPair.getPrivate());
+			this.myKeyAgreement.init(myPair.getPrivate());
 
 		} catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException
 				| InvalidKeyException e) {
