@@ -1,14 +1,17 @@
 package diffiehellman;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -25,7 +28,9 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 
 import javax.crypto.KeyAgreement;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import client.MulticastChat;
 import client.MulticastChatEventListener;
@@ -49,6 +54,12 @@ public class MyMulticastChat extends MulticastChat {
 	private KeyPair myDHPair;
 	private MyDigitalSignature myDigitalSign;
 	private KeyAgreement myKeyAgreement;
+	
+	private byte[] myDHSecret;
+	
+	
+	
+	public static final int DH_MESSAGE = 4;
 
 	public MyMulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener,
 			CipherConfiguration cipherConfiguration) throws IOException {
@@ -83,7 +94,6 @@ public class MyMulticastChat extends MulticastChat {
 		dataStream.writeUTF(username);
 
 		try {
-			System.out.println(Utils.toHex(this.myDHPair.getPublic().getEncoded()));
 			byte[] signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
 			
 			dataStream.writeUTF(Utils.toHex(this.myDHPair.getPublic().getEncoded()));
@@ -117,20 +127,108 @@ public class MyMulticastChat extends MulticastChat {
 		byte[] signaturePubKey = Utils.hexStringToByteArray(hexSignPubKey);
 
 		PublicKey signPublicKey = convertPubKeyByteToPublicKey(signaturePubKey, this.myDigitalSign.getKeyAlgorithm());
-
-		// finally, get the DH Public Key
 		PublicKey publicDHkey = getDHPublicKey(dhPubKey, signedDHPubKey, signPublicKey);
 
 		publicKeys.add(publicDHkey);
 
 		try {
-			myKeyAgreement.doPhase(publicDHkey, true);
-			byte[] hashedSecret = DigestHandler.hashWithSHA1(myKeyAgreement.generateSecret());
+			Key agreement = myKeyAgreement.doPhase(publicDHkey, true);
+			myDHSecret = DigestHandler.hashWithSHA256(myKeyAgreement.generateSecret());
+			//msocket.setCipherKey(Utils.toHex(myDHSecret));
 			
-			System.out.println(Utils.toHex(hashedSecret));
+			//envia-se o agreement por byte[] e depois fazer parse para o objecto Key
+			//ver o exemplo ThreeWay example, pois basta isso conseguir sobrepor o novo user 
+			//sobre o agreement dos outros
+			//Key k = new SecretKeySpec(arg0, arg1);
+			
+			//sendDHMessage();
+			
 		} catch (InvalidKeyException | IllegalStateException | NoSuchAlgorithmException | NoSuchProviderException e) {
-			//System.out.println(e.toString());
-			e.printStackTrace();
+			System.out.println(e.toString());
+		}
+	}
+	
+	/**
+	 * 
+	 * @throws IOException
+	 */
+	protected void sendDHMessage() throws IOException{
+		ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+		DataOutputStream dataStream = new DataOutputStream(byteStream);
+		
+		dataStream.writeLong(CHAT_MAGIC_NUMBER);
+		dataStream.writeInt(DH_MESSAGE);
+		
+		//send all the public keys
+	}
+	
+	/**
+	 * 
+	 * @param istream
+	 * @param address
+	 * @param port
+	 * @throws IOException
+	 */
+	protected void processDHMessage(DataInputStream istream, InetAddress address, int port) throws IOException {
+		//read the public keys, process them, and generate the secret
+	}
+	
+	@Override
+	public void run() {
+		byte[] buffer = new byte[65508];
+		DatagramPacket packet = null;
+		while (isActive) {
+			try {
+
+				// Comprimento do DatagramPacket RESET antes do request
+				packet = new DatagramPacket(buffer, buffer.length);
+				//packet.setLength(buffer.length);
+				msocket.receive(packet);
+
+				DataInputStream istream = new DataInputStream(
+						new ByteArrayInputStream(packet.getData(), packet.getOffset(), packet.getLength()));
+
+				long magic = istream.readLong();
+
+				if (magic != CHAT_MAGIC_NUMBER) {
+					continue;
+
+				}
+				int opCode = istream.readInt();
+				switch (opCode) {
+				case JOIN:
+					processJoin(istream, packet.getAddress(), packet.getPort());
+					break;
+				case LEAVE:
+					processLeave(istream, packet.getAddress(), packet.getPort());
+					break;
+				case MESSAGE:
+					processMessage(istream, packet.getAddress(), packet.getPort());
+					break;
+				case DH_MESSAGE:
+					processDHMessage(istream, packet.getAddress(), packet.getPort());
+					break;
+				default:
+					error("Cod de operacao desconhecido " + opCode + " enviado de " + packet.getAddress() + ":"
+							+ packet.getPort());
+				}
+
+			} catch (InterruptedIOException e) {
+
+				/**
+				 * O timeout e usado apenas para forcar um loopback e testar o
+				 * valor isActive
+				 */
+
+			} catch (Throwable e) {
+				//error("Processing error: " + e.getClass().getName() + ": " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+
+		try {
+			msocket.close();
+		} catch (Throwable e) {
 		}
 	}
 

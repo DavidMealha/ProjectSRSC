@@ -118,6 +118,10 @@ public class MySecureMulticastSocket extends MulticastSocket {
 		dgPacket.setData(buffer);	
 	}
 
+	public void setCipherKey(String newCipherKey) {
+		this.cipherConfiguration.setKeyValue(newCipherKey);
+	}
+	
 	public CipherConfiguration getCipherConfiguration() {
 		return cipherConfiguration;
 	}

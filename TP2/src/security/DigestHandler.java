@@ -28,4 +28,9 @@ public class DigestHandler {
 		MessageDigest hash = MessageDigest.getInstance("SHA1", "BC");
 		return hash.digest(content);
 	}
+	
+	public static byte[] hashWithSHA256(byte[] content) throws NoSuchAlgorithmException, NoSuchProviderException{
+		MessageDigest hash = MessageDigest.getInstance("SHA-256", "BC");
+		return hash.digest(content);
+	}
 }
