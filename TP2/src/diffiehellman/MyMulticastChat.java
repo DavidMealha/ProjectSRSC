@@ -38,6 +38,7 @@ public class MyMulticastChat extends MulticastChat {
 	private static BigInteger g512 = new BigInteger(
 			"153d5d6172adb43045b68ae8e1de1070b6137005686d29d3d73a7749199681ee5b212c9b96bfdcfa5b20cd5e3fd2044895d609cf9b410b7a0f12ca1cb9a428cc",
 			16);
+	
 	private static BigInteger p512 = new BigInteger(
 			"9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd38744d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94bf0573bf047a3aca98cdf3b",
 			16);
@@ -81,22 +82,11 @@ public class MyMulticastChat extends MulticastChat {
 		dataStream.writeUTF(username);
 
 		try {
-			// signed the public key for Diffie-Hellman
-			//byte[] encodedPublicKey = Base64.getEncoder().encode(this.myDHPair.getPublic().getEncoded());
-			
 			byte[] signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
-			
-			System.out.println("DH PUBLIC KEY BEFORE SIGNING: " + Utils.toHex(this.myDHPair.getPublic().getEncoded()));
-			System.out.println("DH PUBLIC KEY AFTER SIGNING: " + Utils.toHex(signedDHpubKey));
-			
-			//dataStream.writeUTF("" + signedDHpubKey.length + "." + myDigitalSign.getMyPublicKey().length);
 			dataStream.writeUTF(Utils.toHex(signedDHpubKey));
-			
 			dataStream.writeUTF(Utils.toHex(myDigitalSign.getMyPublicKey()));
-			
-			System.out.println("PUBLIC KEY: " + Utils.toHex(myDigitalSign.getMyPublicKey()));
-			
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
 			System.out.println(e.toString());
 		}
 
@@ -114,31 +104,17 @@ public class MyMulticastChat extends MulticastChat {
 	protected void processJoin(DataInputStream istream, InetAddress address, int port) throws IOException {
 		super.processJoin(istream, address, port);
 		
-		//read the signed DH public key
-		//String[] sizes = istream.readUTF().split(".");
-		//int signatureSize = Integer.parseInt(sizes[0]);
-		
 		String hexDHPubKey = istream.readUTF();
 		byte[] signedDHPubKey = Utils.hexStringToByteArray(hexDHPubKey);
 		
-		//byte[] decodedSignedDHPubKey = Base64.getDecoder().decode(signedDHPubKey);
-		System.out.println("SIGNED DH PUBLIC KEY IN RECEIVE: " + hexDHPubKey);
-		
-		//read the signature public key
 		String hexSignPubKey = istream.readUTF();
 		byte[] signaturePubKey = Utils.hexStringToByteArray(hexSignPubKey);
 		
-		System.out.println("PUBLIC KEY IN RECEIVE: " + hexSignPubKey);
-		
-		//convert to PublicKey
-		PublicKey sigpk = convertPubKeyByteToPublicKey(signaturePubKey, this.myDigitalSign.getKeyAlgorithm());
+		PublicKey signPublicKey = convertPubKeyByteToPublicKey(signaturePubKey, this.myDigitalSign.getKeyAlgorithm());
 		
 		//finally, get the DH Public Key
-		PublicKey publicDHkey = getDHPublicKey(signedDHPubKey, sigpk);
+		PublicKey publicDHkey = getDHPublicKey(signedDHPubKey, signPublicKey);
 		
-		//System.out.println(Utils.toHex(publicDHkey.getEncoded()));
-		// transform in a public key received, because it was in a string format
-		// adds the public key received to its list
 		// publicKeys.add(publicKey);
 	}
 
