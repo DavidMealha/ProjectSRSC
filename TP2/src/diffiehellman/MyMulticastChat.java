@@ -32,13 +32,14 @@ import client.MulticastChatEventListener;
 import client.MySecureMulticastSocket;
 import helpers.Utils;
 import security.CipherConfiguration;
+import security.DigestHandler;
 
 public class MyMulticastChat extends MulticastChat {
 
 	private static BigInteger g512 = new BigInteger(
 			"153d5d6172adb43045b68ae8e1de1070b6137005686d29d3d73a7749199681ee5b212c9b96bfdcfa5b20cd5e3fd2044895d609cf9b410b7a0f12ca1cb9a428cc",
 			16);
-	
+
 	private static BigInteger p512 = new BigInteger(
 			"9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd38744d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94bf0573bf047a3aca98cdf3b",
 			16);
@@ -52,7 +53,7 @@ public class MyMulticastChat extends MulticastChat {
 	public MyMulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener,
 			CipherConfiguration cipherConfiguration) throws IOException {
 		super(username, group, ttl, listener);
-		
+
 		// create & configure multicast socket
 		msocket = new MySecureMulticastSocket(port, cipherConfiguration);
 		msocket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT_MILLIS);
@@ -63,7 +64,7 @@ public class MyMulticastChat extends MulticastChat {
 		this.myDigitalSign = new MyDigitalSignature();
 
 		generateDiffieHellman();
-		
+
 		// start receive thread and send multicast join message
 		start();
 		sendJoin();
@@ -82,11 +83,13 @@ public class MyMulticastChat extends MulticastChat {
 		dataStream.writeUTF(username);
 
 		try {
+			System.out.println(Utils.toHex(this.myDHPair.getPublic().getEncoded()));
 			byte[] signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
+			
+			dataStream.writeUTF(Utils.toHex(this.myDHPair.getPublic().getEncoded()));
 			dataStream.writeUTF(Utils.toHex(signedDHpubKey));
 			dataStream.writeUTF(Utils.toHex(myDigitalSign.getMyPublicKey()));
-		} 
-		catch (Exception e) {
+		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
 
@@ -103,19 +106,32 @@ public class MyMulticastChat extends MulticastChat {
 	@Override
 	protected void processJoin(DataInputStream istream, InetAddress address, int port) throws IOException {
 		super.processJoin(istream, address, port);
+
+		String hexDhPubKey = istream.readUTF();
+		byte[] dhPubKey = Utils.hexStringToByteArray(hexDhPubKey);
 		
-		String hexDHPubKey = istream.readUTF();
-		byte[] signedDHPubKey = Utils.hexStringToByteArray(hexDHPubKey);
-		
+		String hexSignedDHPubKey = istream.readUTF();
+		byte[] signedDHPubKey = Utils.hexStringToByteArray(hexSignedDHPubKey);
+
 		String hexSignPubKey = istream.readUTF();
 		byte[] signaturePubKey = Utils.hexStringToByteArray(hexSignPubKey);
-		
+
 		PublicKey signPublicKey = convertPubKeyByteToPublicKey(signaturePubKey, this.myDigitalSign.getKeyAlgorithm());
-		
-		//finally, get the DH Public Key
-		PublicKey publicDHkey = getDHPublicKey(signedDHPubKey, signPublicKey);
-		
-		// publicKeys.add(publicKey);
+
+		// finally, get the DH Public Key
+		PublicKey publicDHkey = getDHPublicKey(dhPubKey, signedDHPubKey, signPublicKey);
+
+		publicKeys.add(publicDHkey);
+
+		try {
+			myKeyAgreement.doPhase(publicDHkey, true);
+			byte[] hashedSecret = DigestHandler.hashWithSHA1(myKeyAgreement.generateSecret());
+			
+			System.out.println(Utils.toHex(hashedSecret));
+		} catch (InvalidKeyException | IllegalStateException | NoSuchAlgorithmException | NoSuchProviderException e) {
+			//System.out.println(e.toString());
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -136,22 +152,21 @@ public class MyMulticastChat extends MulticastChat {
 			this.myDHPair = myPair;
 			this.myKeyAgreement.init(myPair.getPrivate());
 
-		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException
-				| InvalidKeyException e) {
+		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @param hexSignedContent
 	 * @param sigPubKeyHex
 	 * @return
 	 */
-	private PublicKey getDHPublicKey(byte[] signedContent, PublicKey sigPubKey) {
+	private PublicKey getDHPublicKey(byte[] dhPubKey, byte[] signedContent, PublicKey sigPubKey) {
 		try {
-			if(verifySignedContent(signedContent, sigPubKey)){
-				return convertPubKeyByteToPublicKey(signedContent, "DH");
+			if (verifySignedContent(dhPubKey, signedContent, sigPubKey)) {
+				return convertPubKeyByteToPublicKey(dhPubKey, "DH");
 			}
 		} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
 			e.printStackTrace();
@@ -160,8 +175,8 @@ public class MyMulticastChat extends MulticastChat {
 	}
 
 	/**
-	 * Auxiliar method to convert the enconded public key byte array into a PublicKey
-	 * object.
+	 * Auxiliar method to convert the enconded public key byte array into a
+	 * PublicKey object.
 	 * 
 	 * @param pubKeyHex
 	 * @return
@@ -187,12 +202,12 @@ public class MyMulticastChat extends MulticastChat {
 	 * @throws InvalidKeyException
 	 * @throws SignatureException
 	 */
-	private boolean verifySignedContent(byte[] signedContent, PublicKey sigPubKey)
+	private boolean verifySignedContent(byte[] dhPubKey, byte[] signedContent, PublicKey sigPubKey)
 			throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
 		Signature sig = Signature.getInstance(this.myDigitalSign.getSignatureAlgorithm());
 		sig.initVerify(sigPubKey);
-		sig.update(signedContent);
+		sig.update(dhPubKey);
 		return sig.verify(signedContent);
 	}
 }

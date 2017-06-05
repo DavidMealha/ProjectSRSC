@@ -24,4 +24,8 @@ public class DigestHandler {
 		return Utils.toHex(hashedPassword);
 	}
 
+	public static byte[] hashWithSHA1(byte[] content) throws NoSuchAlgorithmException, NoSuchProviderException{
+		MessageDigest hash = MessageDigest.getInstance("SHA1", "BC");
+		return hash.digest(content);
+	}
 }
