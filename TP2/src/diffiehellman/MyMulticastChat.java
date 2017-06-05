@@ -82,22 +82,17 @@ public class MyMulticastChat extends MulticastChat {
 
 		try {
 			// signed the public key for Diffie-Hellman
-			byte[] encodedPublicKey = Base64.getEncoder().encode(this.myDHPair.getPublic().getEncoded());
+			//byte[] encodedPublicKey = Base64.getEncoder().encode(this.myDHPair.getPublic().getEncoded());
 			
-			byte[] signedDHpubKey = myDigitalSign.signContent(encodedPublicKey);
+			byte[] signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
 			
 			System.out.println("DH PUBLIC KEY BEFORE SIGNING: " + Utils.toHex(this.myDHPair.getPublic().getEncoded()));
 			System.out.println("DH PUBLIC KEY AFTER SIGNING: " + Utils.toHex(signedDHpubKey));
 			
-			dataStream.writeUTF("" + signedDHpubKey.length);
-			dataStream.write(signedDHpubKey);
-			System.out.println("send" + signedDHpubKey.toString());
+			//dataStream.writeUTF("" + signedDHpubKey.length + "." + myDigitalSign.getMyPublicKey().length);
+			dataStream.writeUTF(Utils.toHex(signedDHpubKey));
 			
-			// also needs to send the public key of the signature,
-			// so the other party can check the signature	
-			dataStream.writeUTF("" + myDigitalSign.getMyPublicKey().length);
-			byte[] encodedDigitalSig = Base64.getEncoder().encode(myDigitalSign.getMyPublicKey());
-			dataStream.write(encodedDigitalSig);
+			dataStream.writeUTF(Utils.toHex(myDigitalSign.getMyPublicKey()));
 			
 			System.out.println("PUBLIC KEY: " + Utils.toHex(myDigitalSign.getMyPublicKey()));
 			
@@ -120,30 +115,28 @@ public class MyMulticastChat extends MulticastChat {
 		super.processJoin(istream, address, port);
 		
 		//read the signed DH public key
-		int signatureSize = Integer.parseInt(istream.readUTF());
-		System.out.println("--------->" + signatureSize);
-		byte[] signedDHPubKey = new byte[signatureSize];
-		istream.read(signedDHPubKey);
+		//String[] sizes = istream.readUTF().split(".");
+		//int signatureSize = Integer.parseInt(sizes[0]);
 		
-		byte[] decodedSignedDHPubKey = Base64.getDecoder().decode(signedDHPubKey);
-		System.out.println("SIGNED DH PUBLIC KEY IN RECEIVE: " + Utils.toHex(decodedSignedDHPubKey));
+		String hexDHPubKey = istream.readUTF();
+		byte[] signedDHPubKey = Utils.hexStringToByteArray(hexDHPubKey);
+		
+		//byte[] decodedSignedDHPubKey = Base64.getDecoder().decode(signedDHPubKey);
+		System.out.println("SIGNED DH PUBLIC KEY IN RECEIVE: " + hexDHPubKey);
 		
 		//read the signature public key
-		int signaturePubKeySize = Integer.parseInt(istream.readUTF());
+		String hexSignPubKey = istream.readUTF();
+		byte[] signaturePubKey = Utils.hexStringToByteArray(hexSignPubKey);
 		
-		byte[] signaturePubKey = new byte[signaturePubKeySize];
-		istream.read(signaturePubKey);
-		byte[] decodedSignaturePubKey = Base64.getDecoder().decode(signaturePubKey);
-		System.out.println("process" + decodedSignedDHPubKey.toString());
-		System.out.println("PUBLIC KEY IN RECEIVE: " + Utils.toHex(decodedSignaturePubKey));
+		System.out.println("PUBLIC KEY IN RECEIVE: " + hexSignPubKey);
 		
 		//convert to PublicKey
-		PublicKey sigpk = convertPubKeyByteToPublicKey(decodedSignaturePubKey);
+		PublicKey sigpk = convertPubKeyByteToPublicKey(signaturePubKey, this.myDigitalSign.getKeyAlgorithm());
 		
 		//finally, get the DH Public Key
-		PublicKey publicDHkey = getDHPublicKey(decodedSignedDHPubKey, sigpk);
+		PublicKey publicDHkey = getDHPublicKey(signedDHPubKey, sigpk);
 		
-		System.out.println(Utils.toHex(publicDHkey.getEncoded()));
+		//System.out.println(Utils.toHex(publicDHkey.getEncoded()));
 		// transform in a public key received, because it was in a string format
 		// adds the public key received to its list
 		// publicKeys.add(publicKey);
@@ -158,16 +151,16 @@ public class MyMulticastChat extends MulticastChat {
 		DHParameterSpec dhParams = new DHParameterSpec(p512, g512);
 
 		try {
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "BC");
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH");
 			keyGen.initialize(dhParams, UtilsDH.createFixedRandom());
 
-			this.myKeyAgreement = KeyAgreement.getInstance("DH", "BC");
+			this.myKeyAgreement = KeyAgreement.getInstance("DH");
 			KeyPair myPair = keyGen.generateKeyPair();
 
 			this.myDHPair = myPair;
 			this.myKeyAgreement.init(myPair.getPrivate());
 
-		} catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException
+		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException
 				| InvalidKeyException e) {
 			e.printStackTrace();
 		}
@@ -182,7 +175,7 @@ public class MyMulticastChat extends MulticastChat {
 	private PublicKey getDHPublicKey(byte[] signedContent, PublicKey sigPubKey) {
 		try {
 			if(verifySignedContent(signedContent, sigPubKey)){
-				return convertPubKeyByteToPublicKey(signedContent);
+				return convertPubKeyByteToPublicKey(signedContent, "DH");
 			}
 		} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
 			e.printStackTrace();
@@ -197,13 +190,13 @@ public class MyMulticastChat extends MulticastChat {
 	 * @param pubKeyHex
 	 * @return
 	 */
-	private PublicKey convertPubKeyByteToPublicKey(byte[] pubKeyHex) {
+	private PublicKey convertPubKeyByteToPublicKey(byte[] pubKeyHex, String algorithm) {
 		try {
-			KeyFactory keyFactory = KeyFactory.getInstance("DH", "BC");
+			KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
 			EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pubKeyHex);
 
 			return keyFactory.generatePublic(publicKeySpec);
-		} catch (InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException e) {
+		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -221,7 +214,7 @@ public class MyMulticastChat extends MulticastChat {
 	private boolean verifySignedContent(byte[] signedContent, PublicKey sigPubKey)
 			throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
-		Signature sig = Signature.getInstance("SHA1withDSA");
+		Signature sig = Signature.getInstance(this.myDigitalSign.getSignatureAlgorithm());
 		sig.initVerify(sigPubKey);
 		sig.update(signedContent);
 		return sig.verify(signedContent);

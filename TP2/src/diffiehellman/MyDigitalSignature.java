@@ -51,5 +51,12 @@ public class MyDigitalSignature {
 	public byte[] getMyPublicKey() {
 		return myPair.getPublic().getEncoded();
 	}
-	
+
+	public String getKeyAlgorithm() {
+		return keyAlgorithm;
+	}
+
+	public String getSignatureAlgorithm() {
+		return signatureAlgorithm;
+	}
 }
