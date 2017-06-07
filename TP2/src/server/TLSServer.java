@@ -139,7 +139,6 @@ public class TLSServer {
 				c.close();
 				s.close();
 			} catch (Exception e) {
-				//e.printStackTrace();
 				System.err.println(e.toString());
 				System.exit(0);
 			}
@@ -147,18 +146,16 @@ public class TLSServer {
 	}
 	
 	/**
-	 * 
+	 * Compares password stored in the server and also the access file
 	 * @param hashedPasswordReceived
 	 * @param multicastAddress
 	 * @param username
 	 * @return
 	 */
 	private static String validateAuthentication(String hashedPasswordReceived, String multicastAddress, String username){
-		//compares password stored in the server
 		String storedHashedPassword = ServerFileHandler.getUserPasswordFromFile(username);
 		
 		if(storedHashedPassword.equals(hashedPasswordReceived)){
-			//check if can access that room
 			if(ServerFileHandler.isUserAllowed(multicastAddress, username)){
 				return "true";
 			} else {

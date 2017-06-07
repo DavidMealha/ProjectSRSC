@@ -38,8 +38,7 @@ public class TLSClient {
 	
 	private String serverAddress;
 	private int serverPort;
-	
-	private PBEConfiguration pbe;
+
 	private CipherConfiguration crypto;
 
 	public TLSClient(String username, String clearPassword, String multicastAddress, String clientKeyStorePassword, String clientEntryPassword, String serverAddress, int serverPort) {
@@ -62,20 +61,8 @@ public class TLSClient {
 		return this.authenticationResult;
 	}
 	
-	public void setPBEConfiguration(String pbe){
-		this.pbe = new PBEConfiguration(pbe);
-	}
-	
 	public void setCipherConfiguration(String crypto){
 		this.crypto = new CipherConfiguration(crypto);
-	}
-
-	public PBEConfiguration getPbe() {
-		return pbe;
-	}
-
-	public void setPbe(PBEConfiguration pbe) {
-		this.pbe = pbe;
 	}
 
 	public CipherConfiguration getCrypto() {
@@ -102,7 +89,6 @@ public class TLSClient {
 		KeyManagerFactory kmf;
 		KeyStore ks;
 		
-		//create trust manager
 		TrustManager[] trustedCerts = new TrustManager[] {new InsecureTrustManager()};
 		
 		try {
@@ -181,8 +167,7 @@ public class TLSClient {
 			r.close();
 			c.close();
 		} catch (IOException e) {
-			e.printStackTrace();
-			// System.err.println(e.toString());
+			System.err.println(e.toString());
 		}
 	}
 }
