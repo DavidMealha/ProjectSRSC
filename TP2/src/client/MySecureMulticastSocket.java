@@ -49,21 +49,6 @@ public class MySecureMulticastSocket extends MulticastSocket {
 
 	@Override
 	public void joinGroup(InetAddress group) throws IOException {
-		// get ip of multicast group
-//		String pbeFilename = "configs/" + group.getHostAddress() + ".pbe";
-//
-//		// class with all the pbe configuration for the address
-//		this.setPbe(FileHandler.readPBEncryptionFile(pbeFilename));
-//
-//		try {
-//			this.setCipherConfiguration(CipherHandler.uncipherFileWithPBE("password", group.getHostAddress()));
-//		} catch (InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException
-//				| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
-//				| ClassNotFoundException e) {
-//			System.out.println("Failed to parse the ciphersuite." + e.getMessage());
-//			// e.printStackTrace();
-//		}
-
 		super.joinGroup(group);
 	}
 

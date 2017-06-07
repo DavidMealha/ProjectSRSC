@@ -18,6 +18,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.EncodedKeySpec;
@@ -26,10 +27,14 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Encoder;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import client.MulticastChat;
@@ -49,16 +54,14 @@ public class MyMulticastChat extends MulticastChat {
 			"9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd38744d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94bf0573bf047a3aca98cdf3b",
 			16);
 
-	private ArrayList<PublicKey> publicKeys;
+	private HashMap<String, PublicKey> publicKeys;
 
 	private KeyPair myDHPair;
 	private MyDigitalSignature myDigitalSign;
 	private KeyAgreement myKeyAgreement;
-	
+
 	private byte[] myDHSecret;
-	
-	
-	
+
 	public static final int DH_MESSAGE = 4;
 
 	public MyMulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener,
@@ -71,7 +74,7 @@ public class MyMulticastChat extends MulticastChat {
 		msocket.setTimeToLive(ttl);
 		msocket.joinGroup(group);
 
-		this.publicKeys = new ArrayList<PublicKey>();
+		this.publicKeys = new HashMap<String, PublicKey>();
 		this.myDigitalSign = new MyDigitalSignature();
 
 		generateDiffieHellman();
@@ -95,7 +98,7 @@ public class MyMulticastChat extends MulticastChat {
 
 		try {
 			byte[] signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
-			
+
 			dataStream.writeUTF(Utils.toHex(this.myDHPair.getPublic().getEncoded()));
 			dataStream.writeUTF(Utils.toHex(signedDHpubKey));
 			dataStream.writeUTF(Utils.toHex(myDigitalSign.getMyPublicKey()));
@@ -119,7 +122,7 @@ public class MyMulticastChat extends MulticastChat {
 
 		String hexDhPubKey = istream.readUTF();
 		byte[] dhPubKey = Utils.hexStringToByteArray(hexDhPubKey);
-		
+
 		String hexSignedDHPubKey = istream.readUTF();
 		byte[] signedDHPubKey = Utils.hexStringToByteArray(hexSignedDHPubKey);
 
@@ -129,39 +132,46 @@ public class MyMulticastChat extends MulticastChat {
 		PublicKey signPublicKey = convertPubKeyByteToPublicKey(signaturePubKey, this.myDigitalSign.getKeyAlgorithm());
 		PublicKey publicDHkey = getDHPublicKey(dhPubKey, signedDHPubKey, signPublicKey);
 
-		publicKeys.add(publicDHkey);
+		publicKeys.put(hexDhPubKey, publicDHkey);
 
 		try {
-			Key agreement = myKeyAgreement.doPhase(publicDHkey, true);
-			myDHSecret = DigestHandler.hashWithSHA256(myKeyAgreement.generateSecret());
-			//msocket.setCipherKey(Utils.toHex(myDHSecret));
+			Iterator it = publicKeys.entrySet().iterator();
+			Key auxKey;
+			while(it.hasNext()){
+				auxKey = myKeyAgreement.doPhase(publicDHkey, false);
+				
+				if(!it.hasNext()){
+					myKeyAgreement.doPhase(auxKey, true);
+				}
+			}
 			
-			//envia-se o agreement por byte[] e depois fazer parse para o objecto Key
-			//ver o exemplo ThreeWay example, pois basta isso conseguir sobrepor o novo user 
-			//sobre o agreement dos outros
-			//Key k = new SecretKeySpec(arg0, arg1);
-			
+			myDHSecret = myKeyAgreement.generateSecret();
+			msocket.setCipherKey(Utils.toHex(myDHSecret));
+
 			//sendDHMessage();
-			
-		} catch (InvalidKeyException | IllegalStateException | NoSuchAlgorithmException | NoSuchProviderException e) {
+
+		} catch (InvalidKeyException | IllegalStateException e) {
 			System.out.println(e.toString());
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @throws IOException
 	 */
-	protected void sendDHMessage() throws IOException{
+	protected void sendDHMessage(byte[] keyAgreement) throws IOException {
 		ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 		DataOutputStream dataStream = new DataOutputStream(byteStream);
-		
+
 		dataStream.writeLong(CHAT_MAGIC_NUMBER);
 		dataStream.writeInt(DH_MESSAGE);
-		
-		//send all the public keys
+		dataStream.writeUTF(Utils.toHex(keyAgreement));
+
+		byte[] data = byteStream.toByteArray();
+		DatagramPacket packet = new DatagramPacket(data, data.length, group, msocket.getLocalPort());
+		msocket.send(packet);
 	}
-	
+
 	/**
 	 * 
 	 * @param istream
@@ -170,9 +180,29 @@ public class MyMulticastChat extends MulticastChat {
 	 * @throws IOException
 	 */
 	protected void processDHMessage(DataInputStream istream, InetAddress address, int port) throws IOException {
-		//read the public keys, process them, and generate the secret
+		// read the public keys, process them, and generate the secret
+		String keyAgreementHex = istream.readUTF();
+
+		//PublicKey key = (PublicKey) new SecretKeySpec(Utils.hexStringToByteArray(keyAgreementHex), "DH");
+
+		try {
+            KeyFactory keyFactory = KeyFactory.getInstance("DH");
+			
+			PublicKey pubKey = keyFactory.generatePublic(
+					new DHPublicKeySpec(new BigInteger(1, Utils.hexStringToByteArray(keyAgreementHex)), this.p512, this.g512));
+
+			myKeyAgreement.doPhase(pubKey, true);
+			//myDHSecret = DigestHandler.hashWithSHA("SHA-256", myKeyAgreement.generateSecret());
+			myDHSecret = myKeyAgreement.generateSecret("AES").getEncoded();
+			msocket.setCipherKey(Utils.toHex(myDHSecret));
+			
+			System.out.println("PROCESS DH MESSAGE KEY: " + Utils.toHex(myDHSecret));
+			
+		} catch (InvalidKeyException | IllegalStateException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+			e.printStackTrace();
+		}
 	}
-	
+
 	@Override
 	public void run() {
 		byte[] buffer = new byte[65508];
@@ -182,7 +212,7 @@ public class MyMulticastChat extends MulticastChat {
 
 				// Comprimento do DatagramPacket RESET antes do request
 				packet = new DatagramPacket(buffer, buffer.length);
-				//packet.setLength(buffer.length);
+				// packet.setLength(buffer.length);
 				msocket.receive(packet);
 
 				DataInputStream istream = new DataInputStream(
@@ -221,7 +251,8 @@ public class MyMulticastChat extends MulticastChat {
 				 */
 
 			} catch (Throwable e) {
-				//error("Processing error: " + e.getClass().getName() + ": " + e.getMessage());
+				// error("Processing error: " + e.getClass().getName() + ": " +
+				// e.getMessage());
 				e.printStackTrace();
 			}
 		}
@@ -242,7 +273,7 @@ public class MyMulticastChat extends MulticastChat {
 
 		try {
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH");
-			keyGen.initialize(dhParams, UtilsDH.createFixedRandom());
+			keyGen.initialize(dhParams, new SecureRandom());
 
 			this.myKeyAgreement = KeyAgreement.getInstance("DH");
 			KeyPair myPair = keyGen.generateKeyPair();

@@ -127,7 +127,7 @@ public class TLSServer {
 				w.flush();
 				
 				if(authResult.equals("true")){
-					String crypto = cipherClientCryptoWithPBE(multicastAddress, hashedPwdReceived, serverPBEPassword);
+					String crypto = getCriptoConfiguration(multicastAddress, hashedPwdReceived, serverPBEPassword);
 					w.write(crypto, 0, crypto.length());
 					w.newLine();
 					w.flush();
@@ -178,7 +178,7 @@ public class TLSServer {
 	 * @param serverPbePassword
 	 * @throws IOException
 	 */
-	private static String cipherClientCryptoWithPBE(String multicastAddress, String userPassword, String serverPbePassword) throws IOException{
+	private static String getCriptoConfiguration(String multicastAddress, String userPassword, String serverPbePassword) throws IOException{
 		CipherConfiguration cipherConfig = null;
 		
 		try {
@@ -191,27 +191,5 @@ public class TLSServer {
 		}
 
 		return cipherConfig.toSimpleStringFormat();
-	}
-
-	private static void printSocketInfo(SSLSocket s) {
-		System.out.println("Socket class: " + s.getClass());
-		System.out.println("   Remote address = " + s.getInetAddress().toString());
-		System.out.println("   Remote port = " + s.getPort());
-		System.out.println("   Local socket address = " + s.getLocalSocketAddress().toString());
-		System.out.println("   Local address = " + s.getLocalAddress().toString());
-		System.out.println("   Local port = " + s.getLocalPort());
-		System.out.println("   Need client authentication = " + s.getNeedClientAuth());
-		SSLSession ss = s.getSession();
-		System.out.println("   Cipher suite = " + ss.getCipherSuite());
-		System.out.println("   Protocol = " + ss.getProtocol());
-	}
-
-	private static void printServerSocketInfo(SSLServerSocket s) {
-		System.out.println("Server socket class: " + s.getClass());
-		System.out.println("   Socker address = " + s.getInetAddress().toString());
-		System.out.println("   Socker port = " + s.getLocalPort());
-		System.out.println("   Need client authentication = " + s.getNeedClientAuth());
-		System.out.println("   Want client authentication = " + s.getWantClientAuth());
-		System.out.println("   Use client mode = " + s.getUseClientMode());
 	}
 }

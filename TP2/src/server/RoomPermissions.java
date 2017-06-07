@@ -5,27 +5,27 @@ import java.util.HashMap;
 
 public class RoomPermissions {
 	
-	private HashMap<String, ArrayList<String>> permData;
+	private HashMap<String, ArrayList<String>> accessControlData;
 	
 	public RoomPermissions(){
-		permData = new HashMap<String, ArrayList<String>>();
+		accessControlData = new HashMap<String, ArrayList<String>>();
 	}
 	
 	public RoomPermissions(HashMap<String, ArrayList<String>> dataStruct){
-		permData = dataStruct;
+		accessControlData = dataStruct;
 	}
 	
 	public void addRoom(String roomName, ArrayList<String> listUsers){
-		permData.put(roomName, listUsers);
+		accessControlData.put(roomName, listUsers);
 	}
 	
 	public ArrayList<String> getRoomPerm(String roomName){
-		return permData.get(roomName);
+		return accessControlData.get(roomName);
 	}
 	
 	public boolean isAllowed(String roomName, String user){
 		
-		ArrayList<String> authUsers = permData.get(roomName);
+		ArrayList<String> authUsers = accessControlData.get(roomName);
 		if(authUsers == null)
 			return false;
 		

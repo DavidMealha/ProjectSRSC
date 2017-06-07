@@ -14,6 +14,13 @@ import helpers.Utils;
  */
 public class DigestHandler {
 
+	/**
+	 * 
+	 * @param password
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws NoSuchProviderException
+	 */
 	public static String hashPassword(String password) 
 			throws NoSuchAlgorithmException, NoSuchProviderException {
 		
@@ -23,14 +30,43 @@ public class DigestHandler {
 
 		return Utils.toHex(hashedPassword);
 	}
+	
+	/**
+	 * 
+	 * @param algorithm
+	 * @param password
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws NoSuchProviderException
+	 */
+	public static String hashPassword(String algorithm, String password) 
+			throws NoSuchAlgorithmException, NoSuchProviderException {
+		
+		MessageDigest hash = MessageDigest.getInstance(algorithm, "BC");	
+		hash.update(password.getBytes());
+		byte[] hashedPassword = hash.digest();
 
-	public static byte[] hashWithSHA1(byte[] content) throws NoSuchAlgorithmException, NoSuchProviderException{
-		MessageDigest hash = MessageDigest.getInstance("SHA1", "BC");
+		return Utils.toHex(hashedPassword);
+	}
+
+	/**
+	 * 
+	 * @param algorithm
+	 * @param content
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws NoSuchProviderException
+	 */
+	public static byte[] hashWithSHA(String algorithm, byte[] content) throws NoSuchAlgorithmException, NoSuchProviderException{
+		MessageDigest hash = MessageDigest.getInstance(algorithm, "BC");
 		return hash.digest(content);
 	}
 	
-	public static byte[] hashWithSHA256(byte[] content) throws NoSuchAlgorithmException, NoSuchProviderException{
-		MessageDigest hash = MessageDigest.getInstance("SHA-256", "BC");
-		return hash.digest(content);
+	public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException{
+		if(args.length < 1){
+			System.out.println("Insert password that you wish to hash and the algorithm!");
+			System.out.println("e.g: password SHA-256");
+		}
+		System.out.println(hashPassword(args[0], args[1]));
 	}
 }

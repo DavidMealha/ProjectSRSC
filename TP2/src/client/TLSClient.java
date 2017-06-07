@@ -90,9 +90,6 @@ public class TLSClient {
 	 * Connects to the server to authenticate the user
 	 */
 	public void run() {
-		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-
-		// read the tls configuration file
 		TLSConfiguration tlsConfig = FileHandler.readTLSConfiguration(CONFIGS_PATH + this.username + TLS_CONFIGURATION_EXTENSION);
 
 		System.setProperty("javax.net.ssl.trustStore", CERTIFICATES_PATH + tlsConfig.getTruststoreFilename());
@@ -111,10 +108,9 @@ public class TLSClient {
 		try {
 
 			if(tlsConfig.getAuthenticationType().equals("CLIENTE-SERVIDOR") || 
-					tlsConfig.getAuthenticationType().equals("CLIENTE"))
+			   tlsConfig.getAuthenticationType().equals("CLIENTE"))
 			{
-				// se o cliente tambem tem de se autenticar, vai ter de obter a
-				// keystore, tal como o servidor, por isso é que recebe a keystore password
+				// se o cliente tambem tem de se autenticar, vai ter de obter a keystore
 				try {
 					ctx = SSLContext.getInstance(tlsConfig.getVersion());
 					
@@ -142,7 +138,7 @@ public class TLSClient {
 				}
 			}
 			
-			c = (SSLSocket) f.createSocket("localhost", 4443);
+			c = (SSLSocket) f.createSocket(this.serverAddress, this.serverPort);
 			
 			//c.setEnabledProtocols(new String[] { tlsConfig.getVersion() });
 			//c.setEnabledCipherSuites(new String[] { tlsConfig.getCiphersuite() });
@@ -188,41 +184,5 @@ public class TLSClient {
 			e.printStackTrace();
 			// System.err.println(e.toString());
 		}
-	}
-
-	private static void printSocketInfo(SSLSocket s) {
-
-		System.out.println("\n------------------------------------------------------\n");
-		System.out.println("Socket class: " + s.getClass());
-		System.out.println("   Remote address = " + s.getInetAddress().toString());
-		System.out.println("   Remote port = " + s.getPort());
-		System.out.println("   Local socket address = " + s.getLocalSocketAddress().toString());
-		System.out.println("   Local address = " + s.getLocalAddress().toString());
-		System.out.println("   Local port = " + s.getLocalPort());
-		System.out.println("   Need client authentication = " + s.getNeedClientAuth());
-		System.out.println("   Client mode = " + s.getUseClientMode());
-		System.out.println("\n------------------------------------------------------\n");
-
-		System.out.println("   Enabled Protocols = " + Arrays.asList(s.getEnabledProtocols()));
-		System.out.println("\n------------------------------------------------------\n");
-
-		System.out.println("   Client Supprted Ciphersuites = " + Arrays.asList(s.getSupportedCipherSuites()));
-		System.out.println("\n------------------------------------------------------\n");
-		System.out.println("   Enabled Ciphersuites = " + Arrays.asList(s.getEnabledCipherSuites()));
-
-		System.out.println("\n------------------------------------------------------\n");
-
-		SSLSession ss = s.getSession();
-
-		System.out.println("   Peer Host = " + ss.getPeerHost());
-		System.out.println("   Peer Port = " + ss.getPeerPort());
-
-		System.out.println("   Protocol = " + ss.getProtocol());
-		System.out.println("   Cipher suite = " + ss.getCipherSuite());
-
-		System.out.println("   Packet Buffer Size = " + ss.getPacketBufferSize());
-
-		System.out.println("\n------------------------------------------------------\n");
-
 	}
 }

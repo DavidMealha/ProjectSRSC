@@ -62,7 +62,6 @@ public class MyMChatCliente extends MChatCliente {
 			//ask for the password before showing the chat
 			String password = JOptionPane.showInputDialog(frame, "What is your password?", null);
 			
-			//clientKeyStorePassword
 			TLSClient tlsClient = new TLSClient(username, password, group.getHostAddress(), keystorePassword, keystoreEntryPassword, "localhost", 4443);
 			tlsClient.run();
 			
