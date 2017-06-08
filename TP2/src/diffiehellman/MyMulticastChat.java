@@ -30,6 +30,7 @@ import java.util.Base64.Encoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
@@ -121,36 +122,50 @@ public class MyMulticastChat extends MulticastChat {
 		super.processJoin(istream, address, port);
 
 		String hexDhPubKey = istream.readUTF();
-		byte[] dhPubKey = Utils.hexStringToByteArray(hexDhPubKey);
-
 		String hexSignedDHPubKey = istream.readUTF();
-		byte[] signedDHPubKey = Utils.hexStringToByteArray(hexSignedDHPubKey);
-
 		String hexSignPubKey = istream.readUTF();
+
+		proccessAgreement(hexDhPubKey, hexSignedDHPubKey, hexSignPubKey);
+		sendDHMessage();
+	}
+	
+	/**
+	 * 
+	 * @param hexDhPubKey
+	 * @param hexSignedDHPubKey
+	 * @param hexSignPubKey
+	 */
+	private void proccessAgreement(String hexDhPubKey, String hexSignedDHPubKey, String hexSignPubKey){
+
+		byte[] dhPubKey = Utils.hexStringToByteArray(hexDhPubKey);
+		byte[] signedDHPubKey = Utils.hexStringToByteArray(hexSignedDHPubKey);
 		byte[] signaturePubKey = Utils.hexStringToByteArray(hexSignPubKey);
 
+		//convert to byte[] the dh pub key that was received, after checking the signature
 		PublicKey signPublicKey = convertPubKeyByteToPublicKey(signaturePubKey, this.myDigitalSign.getKeyAlgorithm());
 		PublicKey publicDHkey = getDHPublicKey(dhPubKey, signedDHPubKey, signPublicKey);
 
+		//add the key to list of keys to calculate the agreement
 		publicKeys.put(hexDhPubKey, publicDHkey);
 
 		try {
 			Iterator it = publicKeys.entrySet().iterator();
 			Key auxKey;
 			while(it.hasNext()){
-				auxKey = myKeyAgreement.doPhase(publicDHkey, false);
+				Map.Entry<String, PublicKey> s = (Entry<String, PublicKey>) it.next();
+				
+				PublicKey pk = publicKeys.get(s.getKey());
+				auxKey = myKeyAgreement.doPhase(pk, false);
 				
 				if(!it.hasNext()){
 					myKeyAgreement.doPhase(auxKey, true);
 				}
 			}
 			
-			myDHSecret = myKeyAgreement.generateSecret();
+			myDHSecret = DigestHandler.hashWithSHA("SHA-256", myKeyAgreement.generateSecret());
 			msocket.setCipherKey(Utils.toHex(myDHSecret));
 
-			//sendDHMessage();
-
-		} catch (InvalidKeyException | IllegalStateException e) {
+		} catch (InvalidKeyException | IllegalStateException | NoSuchAlgorithmException | NoSuchProviderException e) {
 			System.out.println(e.toString());
 		}
 	}
@@ -159,13 +174,22 @@ public class MyMulticastChat extends MulticastChat {
 	 * 
 	 * @throws IOException
 	 */
-	protected void sendDHMessage(byte[] keyAgreement) throws IOException {
+	protected void sendDHMessage() throws IOException {
 		ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 		DataOutputStream dataStream = new DataOutputStream(byteStream);
 
 		dataStream.writeLong(CHAT_MAGIC_NUMBER);
 		dataStream.writeInt(DH_MESSAGE);
-		dataStream.writeUTF(Utils.toHex(keyAgreement));
+
+		try {
+			byte[] signedDHpubKey = myDigitalSign.signContent(this.myDHPair.getPublic().getEncoded());
+
+			dataStream.writeUTF(Utils.toHex(this.myDHPair.getPublic().getEncoded()));
+			dataStream.writeUTF(Utils.toHex(signedDHpubKey));
+			dataStream.writeUTF(Utils.toHex(myDigitalSign.getMyPublicKey()));
+		} catch (Exception e) {
+			System.out.println(e.toString());
+		}
 
 		byte[] data = byteStream.toByteArray();
 		DatagramPacket packet = new DatagramPacket(data, data.length, group, msocket.getLocalPort());
@@ -180,27 +204,11 @@ public class MyMulticastChat extends MulticastChat {
 	 * @throws IOException
 	 */
 	protected void processDHMessage(DataInputStream istream, InetAddress address, int port) throws IOException {
-		// read the public keys, process them, and generate the secret
-		String keyAgreementHex = istream.readUTF();
+		String hexDhPubKey = istream.readUTF();
+		String hexSignedDHPubKey = istream.readUTF();
+		String hexSignPubKey = istream.readUTF();
 
-		//PublicKey key = (PublicKey) new SecretKeySpec(Utils.hexStringToByteArray(keyAgreementHex), "DH");
-
-		try {
-            KeyFactory keyFactory = KeyFactory.getInstance("DH");
-			
-			PublicKey pubKey = keyFactory.generatePublic(
-					new DHPublicKeySpec(new BigInteger(1, Utils.hexStringToByteArray(keyAgreementHex)), this.p512, this.g512));
-
-			myKeyAgreement.doPhase(pubKey, true);
-			//myDHSecret = DigestHandler.hashWithSHA("SHA-256", myKeyAgreement.generateSecret());
-			myDHSecret = myKeyAgreement.generateSecret("AES").getEncoded();
-			msocket.setCipherKey(Utils.toHex(myDHSecret));
-			
-			System.out.println("PROCESS DH MESSAGE KEY: " + Utils.toHex(myDHSecret));
-			
-		} catch (InvalidKeyException | IllegalStateException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-			e.printStackTrace();
-		}
+		proccessAgreement(hexDhPubKey, hexSignedDHPubKey, hexSignPubKey);
 	}
 
 	@Override
@@ -273,7 +281,7 @@ public class MyMulticastChat extends MulticastChat {
 
 		try {
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH");
-			keyGen.initialize(dhParams, new SecureRandom());
+			keyGen.initialize(dhParams, UtilsDH.createFixedRandom());
 
 			this.myKeyAgreement = KeyAgreement.getInstance("DH");
 			KeyPair myPair = keyGen.generateKeyPair();
