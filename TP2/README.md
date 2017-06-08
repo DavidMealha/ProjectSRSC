@@ -22,4 +22,14 @@
 
 ## Fase 2
 
+### How to setup:
+* Run the class TLSServer, specifying the parameters keyStorePassword, entryPassword, serverPbePassword, port. (used: server server serverpbepassword 4443)
+* Run the class MyDHMChatCliente, specifying the parameters username, ipmulticast, port, keyStorePassword, keyStoreEntryPassword. (used: bob 224.10.10.10 8080 bobClient bobClient |OR/AND| alice 224.10.10.10 8080 aliceClient aliceClient |OR/AND| john 224.10.10.10 8080 johnClient johnClient).
+* Application password for alice: password
+* Application password for bob: bob
+* Application password for john: john
+
 ### Observations:
+* The implementation of DH key exchange is unefficient, because all users send their public keys through the socket, when someone joins.
+* An more efficient way would be if we could pass the KeyAgreement byte[] to the other users, and they could convert it back to a KeyAgreement, but we couldn't.
+* And also, we could choose one member of the group(of that multicast IP) to handler the key exchange, to avoid other users to make the computation.
